@@ -185,7 +185,7 @@
 <figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hexo new [<span class="type">layout</span>] &lt;title&gt;</span><br></pre></td></tr></table></figure>
 <p>其中layout可以设置为post，page，draft。生成的对应的文章会生成在source文件下对应的目录中， “title” 是生成文章的名字，需要使用引号，例如：</p>
 <figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hexo new drafts <span class="string">&quot;hexo的基本使用&quot;</span></span><br></pre></td></tr></table></figure>
-<p><img src="img/hexo%E7%9A%84%E5%9F%BA%E6%9C%AC%E4%BD%BF%E7%94%A8/%E6%96%87%E7%AB%A0%E5%AD%98%E8%B4%AE%E8%B7%AF%E5%BE%84.png" alt="文章存储地址"></p>
+<p><img src="/hexo%E7%9A%84%E5%9F%BA%E6%9C%AC%E4%BD%BF%E7%94%A8/%E6%96%87%E7%AB%A0%E5%AD%98%E8%B4%AE%E8%B7%AF%E5%BE%84.png" alt="文章存储地址"></p>
 <p>其中post是默认的选项，post完成后如果在 hexo d 就会发布出去</p>
 <p>draft选项：完成之后并不会直接发布，需要使用指令转化为post</p>
 <figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hexo publish [<span class="type">layout</span>] &lt;title&gt;</span><br></pre></td></tr></table></figure>
@@ -205,12 +205,12 @@
 <p>有的博客要让下插件，但是我下载之后不能正常使用，查阅之后发现直接在source文件夹下面多加一个img文件夹就可以解决本地和上传之后的图片</p>
 <p><a target="_blank" rel="noopener" href="https://ashooter.github.io/2018-11-15/%E5%A6%82%E4%BD%95%E5%9C%A8Hexo%E4%B8%AD%E6%B7%BB%E5%8A%A0%E6%9C%AC%E5%9C%B0%E5%9B%BE%E7%89%87/">参考此篇文章的第二种方法</a><br>
 示例:<br>
-<img src="img/hexo%E7%9A%84%E5%9F%BA%E6%9C%AC%E4%BD%BF%E7%94%A8/%E5%9B%BE%E7%89%87%E5%9C%A8md%E7%9A%84%E5%BC%95%E7%94%A8%E6%A0%BC%E5%BC%8F.png" alt="图片在md的引用格式"><br>
-<img src="img/hexo%E7%9A%84%E5%9F%BA%E6%9C%AC%E4%BD%BF%E7%94%A8/%E8%B7%AF%E5%BE%84%E7%A4%BA%E6%84%8F.png" alt="路径示意"></p>
+<img src="/hexo%E7%9A%84%E5%9F%BA%E6%9C%AC%E4%BD%BF%E7%94%A8/%E5%9B%BE%E7%89%87%E5%9C%A8md%E7%9A%84%E5%BC%95%E7%94%A8%E6%A0%BC%E5%BC%8F.png" alt="图片在md的引用格式"><br>
+<img src="/hexo%E7%9A%84%E5%9F%BA%E6%9C%AC%E4%BD%BF%E7%94%A8/%E8%B7%AF%E5%BE%84%E7%A4%BA%E6%84%8F.png" alt="路径示意"></p>
 <h1><a target="_blank" rel="noopener" href="https://blog.csdn.net/u014155600/article/details/128989261">hexo.butterfly导航栏的类别与标签打开显示Cannot GET /xxx/</a></h1>
 <p>实测该博主的方法可以解决该问题</p>
 <h1>部署到github时出现以下问题</h1>
-<p><img src="C:%5CUsers%5C13661%5CAppData%5CRoaming%5CTypora%5Ctypora-user-images%5Cimage-20250524162209809.png" alt="image-20250524162209809"></p>
+<p><img src="/C:%5CUsers%5C13661%5CAppData%5CRoaming%5CTypora%5Ctypora-user-images%5Cimage-20250524162209809.png" alt="image-20250524162209809"></p>
 <p>该问题是因为将所有文件都一起部署到了仓库当中，正常情况下，只会部署public中的静态文件到仓库中。</p>
 <p>解决方法：</p>
 <p>不适用git init初始化库,如果已经使用了这个指令先使用下面两个指令进行删除</p>
