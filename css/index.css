@@ -1529,6 +1529,9 @@ blockquote footer cite:before {
 blockquote > :last-child {
   margin-bottom: 0 !important;
 }
+.katex-html {
+  display: none !important;
+}
 :root {
   --hl-color: #a6accd;
   --hl-bg: #292d3e;
