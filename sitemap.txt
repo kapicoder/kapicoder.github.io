@@ -1,3 +1,4 @@
+https://kapicoder.github.io/2025/12/13/word2vec%E7%AC%94%E8%AE%B0/
 https://kapicoder.github.io/2025/04/25/hexo%E7%9A%84%E5%9F%BA%E6%9C%AC%E4%BD%BF%E7%94%A8/
 https://kapicoder.github.io/2025/11/24/SAR%E5%9B%BE%E5%83%8F%E5%83%8F%E7%B4%A0%E7%82%B9%E8%BD%AC%E5%8C%96%E4%B8%BA%E7%BB%8F%E7%BA%AC%E5%BA%A6/
 https://kapicoder.github.io/2025/11/08/GBP/
@@ -16,7 +17,8 @@ https://kapicoder.github.io/tags/homework/
 https://kapicoder.github.io/tags/%E5%8A%A8%E6%80%81%E9%98%88%E5%80%BC/
 https://kapicoder.github.io/tags/SAR%E5%9B%BE%E5%83%8F/
 https://kapicoder.github.io/tags/hexo%E4%BD%BF%E7%94%A8/
-https://kapicoder.github.io/tags/wsl/
 https://kapicoder.github.io/tags/GAN/
+https://kapicoder.github.io/tags/LLM/
+https://kapicoder.github.io/tags/wsl/
 https://kapicoder.github.io/tags/mabe/
 https://kapicoder.github.io/tags/%E5%BC%BA%E5%8C%96%E5%AD%A6%E4%B9%A0/
