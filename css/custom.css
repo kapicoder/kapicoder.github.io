@@ -1,0 +1,23 @@
+/* 强制统一分页按钮尺寸 */
+#pagination .pagination > a,
+#pagination .pagination > span {
+  width: 42px !important;
+  height: 42px !important;
+  line-height: 42px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+}
+
+/* 防止 Font Awesome 图标撑高 */
+#pagination .pagination .extend i {
+  line-height: 1 !important;
+  font-size: 1.2em;
+}
+
+/* 防止 hover 抖动 */
+#pagination .pagination > a,
+#pagination .pagination > span {
+  border: 2px solid transparent !important;
+}
