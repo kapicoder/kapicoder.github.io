@@ -1,0 +1,579 @@
+<?xml version="1.0" encoding="utf-8"?>
+<search>
+  <entry>
+    <title>Gaming Behavior Predict</title>
+    <url>/2025/11/08/GBP/</url>
+    <content><![CDATA[Gaming Behavior Predict
+小组作业
+背景
+游戏或许是一种策略游戏，但数据集显示，玩家行为背后的指标远非如此简单。在本篇笔记中，我们将深入分析一个捕捉在线游戏行为细微差别的数据集，挖掘隐藏的模式，并构建一个预测模型，以检验我们能否预测玩家的参与度。
+参考此部分代码
+商业问题
+
+
+如何根据之前玩家的行为预测玩家在游戏中的参与度。通过预测玩家的活跃程度，游戏开发商可以提前识别出潜在的流失玩家，从而采取针对性的措施，如推送奖励、个性化推荐等，提高玩家的留存率和忠诚度。
+
+
+玩家重要特征选取：并不是所有特征对玩家的参与度都有很重要的作用，玩家的参与度往往是由几个重要的特征决定的，找到重要的特征有利于商家针对性的优化产品。
+
+
+数据
+使用公开数据集 Predict Online Gaming Behavior Dataset该数据集涵盖了与在线游戏环境中玩家行为相关的全面指标和人口统计数据。它包括玩家人口统计信息、游戏特定细节、参与度指标以及反映玩家留存率的目标变量等变量。
+实现的具体流程
+
+
+首先对数据进行预处理，将类别信息转化为int类型，使用labelEncoder，并且查看是否有缺失值存在。
+# Import necessary libraries and suppress warningsimport warningswarnings.filterwarnings(&#x27;ignore&#x27;)import numpy as npimport pandas as pdimport timeimport matplotlibmatplotlib.use(&#x27;Agg&#x27;)  # use Agg backend for matplotlibimport matplotlib.pyplot as plt%matplotlib inlineimport seaborn as snsimport mathfrom sklearn.model_selection import train_test_splitfrom sklearn.preprocessing import LabelEncoder, StandardScalerfrom sklearn.ensemble import RandomForestClassifierfrom sklearn.metrics import accuracy_score, confusion_matrix, roc_curve, auc# For reproducibilitynp.random.seed(42)file_path = &#x27;online_gaming_behavior_dataset.csv&#x27;df = pd.read_csv(file_path, encoding=&#x27;ascii&#x27;, delimiter=&#x27;,&#x27;)# A little dry humor for the data geeks: If our visualizations don&#x27;t win you over, at least our code comments might.# Data Cleaning and Preprocessing# Check for missing values and data typesprint(&#x27;Data types:&#x27;)print(df.dtypes)print(&#x27;\nMissing values per column:&#x27;)print(df.isnull().sum())# In our dataset, we assume there are no date columns. However, if any date strings are found, you might use pd.to_datetime# Encode categorical featurescategorical_cols = [&#x27;Gender&#x27;, &#x27;Location&#x27;, &#x27;GameGenre&#x27;, &#x27;GameDifficulty&#x27;, &#x27;EngagementLevel&#x27;]# Label encoding for categorical columns for simplicity in both EDA and predictive modelingle = LabelEncoder()for col in categorical_cols:    # It&#x27;s a common pitfall to not check for missing values before encoding    df[col] = df[col].astype(str)  # ensure textual data    df[col] = le.fit_transform(df[col])# Scaling numeric features for better performance in the prediction modelnumeric_cols = [&#x27;Age&#x27;, &#x27;PlayTimeHours&#x27;, &#x27;InGamePurchases&#x27;, &#x27;SessionsPerWeek&#x27;, &#x27;AvgSessionDurationMinutes&#x27;, &#x27;PlayerLevel&#x27;, &#x27;AchievementsUnlocked&#x27;]scaler = StandardScaler()df[numeric_cols] = scaler.fit_transform(df[numeric_cols])# Final dataset previewprint(&#x27;\nCleaned dataset preview:&#x27;)df.head()
+
+
+
+​	2.对数据进行可视化，简略查看数据的分布和之间的联系
+# Exploratory Data Analysis# Let&#x27;s create several visualization plots to gain insights into the data.  If you ever run into issues with plotting, check that you are using the correct backend and inline settings.# 1. Histograms for numeric columnsplt.figure(figsize=(15, 10))for i, col in enumerate([&#x27;Age&#x27;, &#x27;PlayTimeHours&#x27;, &#x27;InGamePurchases&#x27;, &#x27;SessionsPerWeek&#x27;, &#x27;AvgSessionDurationMinutes&#x27;, &#x27;PlayerLevel&#x27;, &#x27;AchievementsUnlocked&#x27;], 1):    plt.subplot(3, 3, i)    sns.histplot(df[col], kde=True, color=&#x27;blue&#x27;)    plt.title(f&#x27;Distribution of &#123;col&#125;&#x27;)plt.tight_layout()plt.show()# 2. Box plots for numeric columnsplt.figure(figsize=(15, 10))for i, col in enumerate([&#x27;Age&#x27;, &#x27;PlayTimeHours&#x27;, &#x27;InGamePurchases&#x27;, &#x27;SessionsPerWeek&#x27;, &#x27;AvgSessionDurationMinutes&#x27;, &#x27;PlayerLevel&#x27;, &#x27;AchievementsUnlocked&#x27;], 1):    plt.subplot(3, 3, i)    sns.boxplot(y=df[col], color=&#x27;green&#x27;)    plt.title(f&#x27;Box plot of &#123;col&#125;&#x27;)plt.tight_layout()plt.show()# 3. Heatmap for correlations if there are at least four numeric featuresnumeric_df = df.select_dtypes(include=[np.number])if numeric_df.shape[1] &gt;= 4:    plt.figure(figsize=(10, 8))    corr = numeric_df.corr()    sns.heatmap(corr, annot=True, cmap=&#x27;coolwarm&#x27;, fmt=&#x27;.2f&#x27;)    plt.title(&#x27;Correlation Heatmap of Numeric Features&#x27;)    plt.show()# 4. Pair plot to explore feature relationships a bit furthersns.pairplot(df[numeric_df.columns])plt.show()# 5. Count Plot for EngagementLevel (after encoding, these become numbers; in a real scenario, one might map back to labels)plt.figure(figsize=(8, 6))sns.countplot(x=&#x27;EngagementLevel&#x27;, data=df, palette=&#x27;Set2&#x27;)plt.title(&#x27;Count Plot of Engagement Level&#x27;)plt.show()
+部分结果如下：
+
+
+从上面的第三幅图热点图中可以看出：AvgSessionDurationMinutes和SessionsPerWeek与要预测的结果EngagementLevel都有很强的关联。
+
+​	3.训练基准模型，使用全部的特征进行训练，此时选用随机森林作为模型。并且计算出混淆矩阵和ROC曲线以及特征重要性
+# Predictive Modeling# In this section, we create a predictor to estimate the EngagementLevel of a player using various features.# Define features (X) and target (y)# We drop PlayerID since it is just an identifier and use the rest as predictorsfeatures = df.drop(columns=[&#x27;PlayerID&#x27;, &#x27;EngagementLevel&#x27;])target = df[&#x27;EngagementLevel&#x27;]# Split the data into train and test setsX_train, X_test, y_train, y_test = train_test_split(features, target, test_size=0.2, random_state=42)# 记录开始时间start_time = time.time()print(&quot;Train finished, total time:&quot;, time.time() - start_time)# A random forest classifier is chosen for its versatility and robustnessmodel = RandomForestClassifier(n_estimators=100, random_state=42)model.fit(X_train, y_train)end_time = time.time()# Predictions and evaluationy_pred = model.predict(X_test)accuracy = accuracy_score(y_test, y_pred)print(f&quot;Prediction Accuracy: &#123;accuracy:.2f&#125;&quot;)# Confusion matrix to further visualize performancecm = confusion_matrix(y_test, y_pred)plt.figure(figsize=(6, 5))sns.heatmap(cm, annot=True, fmt=&#x27;d&#x27;, cmap=&#x27;Blues&#x27;)plt.title(&#x27;Confusion Matrix&#x27;)plt.xlabel(&#x27;Predicted&#x27;)plt.ylabel(&#x27;Actual&#x27;)plt.show()# ROC Curve - Since this is a multi-class problem, we will demonstrate a one-vs-rest approach for one classfrom sklearn.preprocessing import label_binarizen_classes = len(np.unique(target))y_test_bin = label_binarize(y_test, classes=range(n_classes))y_score = model.predict_proba(X_test)fpr = dict()tpr = dict()roc_auc = dict()for i in range(n_classes):    fpr[i], tpr[i], _ = roc_curve(y_test_bin[:, i], y_score[:, i])    roc_auc[i] = auc(fpr[i], tpr[i])# Plot ROC curve for the first class as an example;plt.figure(figsize=(8, 6))plt.plot(fpr[0], tpr[0], color=&#x27;darkorange&#x27;, lw=2, label=f&#x27;ROC curve (area = &#123;roc_auc[0]:0.2f&#125;)&#x27;)plt.plot([0, 1], [0, 1], color=&#x27;navy&#x27;, lw=2, linestyle=&#x27;--&#x27;)plt.xlim([0.0, 1.0])plt.ylim([0.0, 1.05])plt.xlabel(&#x27;False Positive Rate&#x27;)plt.ylabel(&#x27;True Positive Rate&#x27;)plt.title(&#x27;Receiver Operating Characteristic for Class 0&#x27;)plt.legend(loc=&quot;lower right&quot;)plt.show()# Permutation Importance (simple version using feature importances from our model)importances = model.feature_importances_indices = np.argsort(importances)plt.figure(figsize=(10, 6))plt.barh(range(len(indices)), importances[indices], color=&#x27;b&#x27;, align=&#x27;center&#x27;)plt.yticks(range(len(indices)), [features.columns[i] for i in indices])plt.xlabel(&#x27;Relative Importance&#x27;)plt.title(&#x27;Feature Importances&#x27;)plt.show()
+
+
+训练的准确度为0.91，验证了模型的可用性，并且训练的时间为2.64，作为基准将和后面的进行对比。
+
+
+
+AUC值为0.94，再次验证该模型的可用性，具体ROC和AUC的计算参考另一篇文档 ROC曲线和AOC值
+
+
+
+最后是特征的重要度，与上面数据分析部分一致，AvgSessionDurationMinutes和SessionsPerWeek与要预测的结果EngagementLevel都有很强的关联。
+
+​	4.选取不同的特征组合进行训练模型：选取的逻辑根据上图特征重要程度的图片，按照重要程度从低到高依次累积删除，具体就是先删除0个特征，此时就是上面的基准模型，然后删除一个，就是最后一个特征：InGamePurchases。然后累计删除两个：Gender+InGamePurchases。依次类推。
+features_sorted=[features.columns[i] for i in indices]# Predictive Modelingaccuracy_list=[]time_list=[]reserve_num=4# In this section, we create a predictor to estimate the EngagementLevel of a player using various features.for i in range(len(features_sorted)-reserve_num+1):    dropcol=features_sorted[:i]    dropcol.extend([&#x27;PlayerID&#x27;, &#x27;EngagementLevel&#x27;])    print(f&quot;Dropping columns: &#123;dropcol&#125;&quot;)    features_selected=df.drop(columns=dropcol)    print(f&quot;The features used for prediction are: &#123;features_selected.columns.tolist()&#125;&quot;)    # Define features (X) and target (y)    # We drop PlayerID since it is just an identifier and use the rest as predictors    target = df[&#x27;EngagementLevel&#x27;]    # Split the data into train and test sets    X_train, X_test, y_train, y_test = train_test_split(features_selected, target, test_size=0.2, random_state=42)    # 记录开始时间    start_time = time.time()    # A random forest classifier is chosen for its versatility and robustness    model = RandomForestClassifier(n_estimators=100, random_state=42)    model.fit(X_train, y_train)    end_time = time.time()    print(&quot;time: cost:&quot;, end_time - start_time)    # Predictions and evaluation    y_pred = model.predict(X_test)    accuracy = accuracy_score(y_test, y_pred)    accuracy_list.append(accuracy)    time_list.append(end_time - start_time)    print(f&quot;Prediction Accuracy: &#123;accuracy:.2f&#125;&quot;)
+部分输出如下：
+
+5.可视化输出
+X=list(range(0,len(features_sorted)-reserve_num+1))print(accuracy_list)print(time_list)log_score = [math.log(x) for x in accuracy_list]fig, ax1 = plt.subplots()ax1.plot(X, log_score, &#x27;g-&#x27;)ax1.scatter(X, log_score, color=&#x27;r&#x27;)ax1.set_xlabel(&#x27;Dropped Features Count&#x27;)ax1.set_ylabel(&#x27;log accuracy_score&#x27;, color=&#x27;g&#x27;)ax1.set_ylim(-0.13,-0.08)# 创建第二个 y 轴ax2 = ax1.twinx()# 绘制第二个 y 轴的柱状图ax2.bar(X, time_list, width=0.2, color=&#x27;b&#x27;, align=&#x27;center&#x27;)  # 设置柱子的宽度、颜色和对齐方式ax2.set_ylabel(&#x27;Time cost&#x27;, color=&#x27;b&#x27;)ax2.set_ylim(1,4)# 显示图形plt.show()
+
+
+最终结果如上图所示，其中横坐标是删去的特征数量，左边的竖坐标是训练的准确度，为了更好的区分几个相近的准确度，使用log(准确度)log(准确度)log(准确度) ，对应折线图。右侧的竖坐标是训练消耗的时间，对应柱状图。结果展示了两个结论：
+
+并不是将所有特征都使用到模型效果才好，随着特征数量的减少，训练结果分数反而可能会变好，并且过多的输入特征会导致训练时间的增加，增加企业时间成本。
+当删除7个特征的时候，准确度大幅减少，说明删除的第7个以及还没有删除的特征都有很强的作用，企业可以针对这几个特征进行优化
+
+
+]]></content>
+      <tags>
+        <tag>homework</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Nao机器人刷机</title>
+    <url>/2025/04/30/Nao%E6%9C%BA%E5%99%A8%E4%BA%BA%E5%88%B7%E6%9C%BA/</url>
+    <content><![CDATA[1.刷机前准备：
+1.flasher-2.1.0.19-win64-vs2010
+2.opennao-atom-system-image-2.1.4.13_2015-08-27
+3.U盘
+所需资料夸克网盘链接 （若连接无法使用了可以去官网下载对应的资源）
+官网资源下载链接
+2.格式化U盘
+2.1 使用管理员身份打开cmd分别进行以下操作
+
+
+
+diskpart
+
+
+
+list disk
+系统会列出所有磁盘，根据大小识别U盘编号（比如 Disk 2 是你的U盘）。
+3.输入以下命令（以选中你的U盘为例，如果你的U盘是 Disk 2）：
+select disk 2
+4.然后执行以下命令，彻底清除所有分区与文件系统信息：
+clean
+5.注：如果仅仅格式化的话会出现以下问题
+
+这是因为仅仅格式话的化磁盘里面还有有文件系统，并不能直接作为刷机U盘
+6.如果出现以下图片则为成功了
+
+3.机器人刷机
+将U盘插入机器人后脑勺，长按胸口的按钮直至变蓝，等待一会他刷机完成的话就会发出声音就证明刷机成功了。
+4.机器人的使用
+机器人的使用这位写的很不错，可以快速了解对应api及功能
+]]></content>
+      <tags>
+        <tag>Nao机器人</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Hello world!</title>
+    <url>/2025/04/30/hello-world/</url>
+    <content><![CDATA[Welcome to Hexo! This is your very first post. Check documentation for more info. If you get any problems when using Hexo, you can find the answer in troubleshooting or you can ask me on GitHub.
+Quick Start
+Create a new post
+$ hexo new &quot;My New Post&quot;
+More info: Writing
+Run server
+$ hexo server
+More info: Server
+Generate static files
+$ hexo generate
+More info: Generating
+Deploy to remote sites
+$ hexo deploy
+More info: Deployment
+]]></content>
+  </entry>
+  <entry>
+    <title>ROC曲线和AUC值</title>
+    <url>/2025/10/25/ROC%E6%9B%B2%E7%BA%BF%E5%92%8CAUC%E5%80%BC/</url>
+    <content><![CDATA[ROC曲线和AUC值
+ROC曲线
+ROC曲线（Receiver Operating Characteristic）全称：受试者工作特征曲线
+提到ROC曲线就要先说明一下两个概念：FPR（伪正类率），TPR（真正类率）
+它们都是对分类任务的一个评测指标。
+对于一个二分类任务（假定为1表示正类， 0表示负类），对于一个样本，分类的结果总共有四种：
+类别实际为1，被分为0，FN（False Negative）
+类别实际为1，被分为1，TP（True Positive）
+类别实际为0，被分为1，FP（False Positive）
+类别实际为0，被分为0，TN（True Negative）
+而FPR（False Positive Rate）= FP /（FP + TN），即负类数据被分为正类的比例
+TPR（True Positive Rate）= TP /（TP + FN），即正类数据被分为正类的比例
+简而言之： FPR：对-&gt;对   TPR：错-&gt;对 ，很容易看出来FPR越高越好，TPR越低越好。
+​	对于样本数据，我们使用分类器对其进行分类，分类器会给出每个数据为正例的概率，我们可以针对此来设定一个阈值，当某个sample被判断为正例的概率大于这个阈值时，认为该sample为正例，小于则为负例，然后通过计算我们就可以得到一个(TPR , FPR)对，即图像上的一个点，我们通过不断调整这个阈值，就得到若干个点，从而画出一条曲线。
+​	并且阈值增大，TPR和FPR都会减小，这是为什么呢？
+现在举一个简单明了的例子：
+​	假如有一堆苹果，其中好的苹果有100个，坏的苹果有50个，现在有一批人来从这堆苹果中挑选出好的来，并且不同的人挑选的水平不一致。
+​	现在其中一号选手挑选的苹果，挑选出来的苹果中：好的有25个，坏的有25个，那么FPR=25/50=0.5，TPR=25/100=0.25
+​	因为不同的选手挑选苹果的要求不一样，现在又二号选手，他的要求更加严格（理解为阈值越大），他最终只挑选出来了20个苹果，其中：好的苹果有10个，坏的苹果有10个，那么 FPR=10/50=0.2， TPR=10/100=0.1
+​	可以很清楚的发现挑选苹果越严格(阈值)增大，TPR和FPR都会减小。因为阈值越高，更少的样本会被分类为正确的，这会直接导致TPR和FPR减小。
+​	现在不同的选手对应的一组（FPR，TRP），然后将FPR作为x轴，TRP作为y轴，多个点连成的曲线就叫做ROC曲线。
+​	例如下图这种：
+
+AUC值
+​	了解完ROC曲线之后，AUC值就更加明了，AUC值（Area Under Curve）就是ROC曲线下的面积，取值为0-1。
+
+
+AUC = 1，是完美分类器，采用这个预测模型时，存在至少一个阈值能得出完美预测。绝大多数预测的场合，不存在完美分类器。
+0.5 &lt; AUC &lt; 1，优于随机猜测。这个分类器（模型）妥善设定阈值的话，能有预测价值。
+AUC = 0.5，跟随机猜测一样（例：丢铜板），模型没有预测价值。
+AUC &lt; 0.5，比随机猜测还差；但只要总是反预测而行，就优于随机猜测。
+
+ROC的优点
+ROC曲线有个很好的特性：当测试集中的正负样本的分布变化的时候，ROC曲线能够保持不变。在实际的数据集中经常会出现类不平衡(class imbalance)现象，即负样本比正样本多很多(或者相反)，而且测试数据中的正负样本的分布也可能随着时间变化。下图是ROC曲线和Precision-Recall曲线的对比：
+
+在上图中，(a)和©为ROC曲线，(b)和(d)为Precision-Recall曲线。(a)和(b)展示的是分类其在原始测试集(正负样本分布平衡)的结果，©和(d)是将测试集中负样本的数量增加到原来的10倍后，分类器的结果。可以明显的看出，ROC曲线基本保持原貌，而Precision-Recall曲线则变化较大。
+]]></content>
+      <tags>
+        <tag>动态阈值</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>SAR图像像素点转化为经纬度</title>
+    <url>/2025/11/24/SAR%E5%9B%BE%E5%83%8F%E5%83%8F%E7%B4%A0%E7%82%B9%E8%BD%AC%E5%8C%96%E4%B8%BA%E7%BB%8F%E7%BA%AC%E5%BA%A6/</url>
+    <content><![CDATA[SAR 图像像素点转化经纬度
+有的 tiff 格式的 SAR 图像其可能存在 CRS 和转化矩阵，可以使用这两个参数将 SAR 图像中的像素点转化为实际的经纬度。
+CRS 地理坐标是用来表示地球上的具体某一点的坐标系，类似于二维平面下有极坐标系和直角坐标系一样，CRS 也有很多种不同的坐标系，下面输出的 CRS 就是数据集使用的地理坐标系，但是这个不是标准的经纬度坐标，输出 CRS 信息是用来描述这个坐标系的具体参数，但是实际使用的时候并不需要全部了解这些参数的意义，直接整体使用即可。
+
+将像素点转化为经纬度有两步仿射变化：
+
+使用 transform 矩阵将像素点转化为该数据集下的 CRS 地理坐标系。
+将该数据集的坐标系转化为标准经纬度坐标系。
+
+
+第一步的 transform 矩阵是 tiff 图像种可以直接获取的，如下面所示。但是如果输出的是单位矩阵的话表示该数据集没有可使用的转化矩阵，没办法转化为 CRS 坐标。
+import rasterio# 打开 TIFF 文件with rasterio.open(&#x27;../dataset/AIR-SARShip-1.0/data_spilt/images/SARShip-1.0-1_r02432_c02432.tiff&#x27;) as dataset:    # 获取仿射变换矩阵    transform = dataset.transform    print(&quot;Transform:&quot;, transform)    # 获取地理坐标参考系统（CRS）    crs = dataset.crs    print(&quot;CRS:&quot;, crs)
+Transform: | 3.00, 0.00, 398197.03|| 0.00,-3.00, 117781.13|| 0.00, 0.00, 1.00|CRS: PROJCS[&quot;Projection Name = UTMUnits = Meter&quot;,GEOGCS[&quot;WGS 84&quot;,DATUM[&quot;World Geodetic System 1984&quot;,SPHEROID[&quot;WGS 84&quot;,6378137,298.257164354493]],PRIMEM[&quot;Greenwich&quot;,0],UNIT[&quot;degree&quot;,0.0174532925199433,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,30.1750794778181],PARAMETER[&quot;central_meridian&quot;,114.404640526027],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,400000],PARAMETER[&quot;false_northing&quot;,100000],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]
+
+第一个仿射矩阵是数据集自带的，但是第二仿射矩阵需要使用 pyporj 库种的 Transformer 进行计算，如下面代码所示，获得的仿射矩阵就是从数据集中的 crs 坐标系到“EPSG:4326”的映射。EPSG:4326 是经纬度的坐标系标准。
+
+from pyproj import Transformercrs = dataset.crs  #获取数据集的CRSgeo_transformer = Transformer.from_crs(crs, &quot;EPSG:4326&quot;, always_xy=True) #获得将CRS转化为标准经纬度的坐标def pixel_to_lonlat(x_pixel, y_pixel, transform_affine, geo_transformer):    &quot;&quot;&quot;Convert pixel coordinates to lon/lat using raster transform/CRS.&quot;&quot;&quot;    if transform_affine is None:        raise ValueError(&quot;TIFF file does not contain an affine transform matrix.&quot;)    x_geo, y_geo = transform_affine * (x_pixel, y_pixel)    if geo_transformer is None:        # CRS missing; return projected coordinates as best effort.        return x_geo, y_geo    lon, lat = geo_transformer.transform(x_geo,y_geo)    return lon, lat
+验证结果
+使用公开的数据集 AIR-SARShip-1.0 进行验证，原始的图像如下所示：
+
+将获得的中心经纬度在 google 地球中进行搜索，结果如下，验证了经纬度的真实性。
+
+SAR 图像裁剪
+如上面输出的仿射矩阵：
+Transform: | 3.00, 0.00, 398197.03|		  | 0.00,-3.00, 117781.13|		  | 0.00, 0.00, 1.00           |
+对于一个坐标点（x，y），仿射转化的结果是 3 _ x +398197.03, -3 _ y+ 119981.13,其中的 398197.03 和 117781.13 相当于是偏移量，是图像左上角的 CRS 坐标。3 和-3 相当于是缩放变量，是一个像素点单位对应的 CRS 坐标的单位。
+
+所以如果要对图像进行裁剪的话，需要将偏移量进行修改，才能保证子图的仿射矩阵正确。
+
+window = Window(col, row, w, h)new_transform_matrix = rasterio.windows.transform(window, dataset.transform)
+可以通过上面的方法获得裁剪之后的仿射矩阵，其中 window 是裁剪之后的图像在原图像中的框图。
+]]></content>
+      <tags>
+        <tag>SAR图像</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>hexo的基本使用以及问题及解决办法(持续更新)</title>
+    <url>/2025/04/25/hexo%E7%9A%84%E5%9F%BA%E6%9C%AC%E4%BD%BF%E7%94%A8/</url>
+    <content><![CDATA[基本写作操作
+创建新的文章
+hexo new [layout] &lt;title&gt;
+其中layout可以设置为post，page，draft。生成的对应的文章会生成在source文件下对应的目录中， “title” 是生成文章的名字，需要使用引号，例如：
+hexo new drafts &quot;hexo的基本使用&quot;
+
+其中post是默认的选项，post完成后如果在 hexo d 就会发布出去
+draft选项：完成之后并不会直接发布，需要使用指令转化为post
+hexo publish [layout] &lt;title&gt;
+创建完文章之后打开对应的md文件，一般有默认的模板，可以添加额外的内容，参考此文档中的Post Front-matter
+删除文章
+​	直接在本地删除即可，然后再分别输入上传即可（若要删除的文章没有上传过则省略下面步骤）参考此文
+hexo cleanhexo ghexo d 
+在本地查看结果
+hexo s
+默认的端口号是4000，如果打开的网址没有内容，可能是因为端口被占用了，可以更改默认的端口号
+hexo s -p 4001
+将默认的端口号改成4001并且运行
+或者永久更改，参考此文
+上传文章
+hexo cleanhexo ghexo d
+md文件中无法插入本地图片
+有的博客要让下插件，但是我下载之后不能正常使用，查阅之后发现直接在source文件夹下面多加一个img文件夹就可以解决本地和上传之后的图片。
+参考此篇文章的第二种方法
+示例:
+
+
+补充：
+​	使用post_asset_image之后，还是不能成功渲染图片，html显示如下内容：
+
+html输出为：
+但是在html文件中却是：
+然后我的img文件存放在source/img/&lt;文章名字&gt; 下面的，所以html中缺少…/来回到source文件。
+解决方法：找到blog\node_modules\hexo-asset-image\index.js 文件，将58，59行改成下列就能正常运行了：部分参考这个文章
+
+hexo.butterfly导航栏的类别与标签打开显示Cannot GET /xxx/
+实测该博主的方法可以解决该问题
+部署到github时出现以下问题
+
+该问题是因为将所有文件都一起部署到了仓库当中，正常情况下，只会部署public中的静态文件到仓库中。
+解决方法：
+不适用git init初始化库,如果已经使用了这个指令先使用下面两个指令进行删除
+Remove-Item -Recurse -Force .deploy_git
+下载部署插件
+npm install hexo-deployer-git --save
+然后再使用hexo d部署就能成功部署
+使用公式时出现问题，每个公式都渲染了两次
+​	我使用的是butterfly自带的katex，在主题config配置如下：
+但是 渲染到html文件的时候出现如下情况：
+
+md文件中为：
+
+​	查看html文件发现：
+
+​	其中公式被渲染了两次，分别为ketax-html和katex-mathml，具体为什么会这样还没不可得知，可能是之前配置的有问题?,在网上查阅之后也没有类似案例,只好自己解决.
+​	这里我们想使用的是katex-mathml 这个的结果,那么最简单的方式是直接将ketax-html 设置为不显示就行,只需在主题的css添加:
+.katex-html &#123;  display: none !important;&#125;
+​	就可以不显示所有的katex-html.butterfly主题的source下有css文件,其中有一个index.styl文件是用来引用静态css文件的
+
+​	其中引用了很多css文件,只要在其中一个加上上面的css代码就行,这个选_global文件夹中的index.styl中添加上面的css代码,然后重新部署就可以解决.
+​	注:不能直接在hexo目录下的public/css/index.css中添加上面的css代码,因为每次hexo clean 和hexo g会根据主题的css重新设置public/css/index,导致添加的代码被覆盖.
+笔记命名问题
+笔记的文件名字必须和title一致，不然无法发布出去。所以一开始就将两者保持一致，避免对应的图像文件夹名字也出现错误，导致需要修改的地方过多。
+下一页按钮与页数边框无法对齐
+当内容过多出现第二页之后，有以下问题，页不知道是什么造成的。
+
+解决方案如下：
+在source\css\custom.css目录下创建该css文件，然后输入以下内容：
+/* 强制统一分页按钮尺寸 */#pagination .pagination &gt; a,#pagination .pagination &gt; span &#123;  width: 42px !important;  height: 42px !important;  line-height: 42px !important;  display: inline-flex !important;  align-items: center !important;  justify-content: center !important;  box-sizing: border-box !important;&#125;/* 防止 Font Awesome 图标撑高 */#pagination .pagination .extend i &#123;  line-height: 1 !important;  font-size: 1.2em;&#125;/* 防止 hover 抖动 */#pagination .pagination &gt; a,#pagination .pagination &gt; span &#123;  border: 2px solid transparent !important;&#125;
+然后重新部署即可解决。
+如果还不能解决，在_config.butterfly.yml 中，修改以下内容字段：
+inject:  head:    - &lt;link rel=&quot;stylesheet&quot; href=&quot;/css/custom.css&quot;&gt;    # - &lt;link rel=&quot;stylesheet&quot; href=&quot;/xxx.css&quot;&gt;  bottom:    # - &lt;script src=&quot;xxxx&quot;&gt;&lt;/script&gt;
+]]></content>
+      <tags>
+        <tag>hexo使用</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>word2vec笔记</title>
+    <url>/2025/12/13/word2vec%E7%AC%94%E8%AE%B0/</url>
+    <content><![CDATA[word2vec 笔记
+
+word2vec 中的数据原理详解
+
+首先明确这些模型的作用：通过自监督判别任务，训练有语义结构的词向量。
+这里的的有语义结构的意思是相类似的词需要有较相近的词向量。
+基于 Hierarchical softmax 的模型
+
+CBOW 模型是根据上下文的单词来预测中心词的概率
+Ship-gram 模型是根据中心词预测上下文词汇出现的概率
+CBOW 模型
+
+对于模型的讲解原文章以及写的很好了，这里仅仅做问题补充。
+1.首先回答原文章留出的思考题：
+
+答案是也满足归一化操作，为什么呢？
+
+因为对每一个节点都是进行的 sigmod 操作，那么对于每一个非叶节点，左子节点的概率和右子节点的概率和一定是为 1 的。这样的话可以看作将一块饼分成很多块，每一次都是在上一次分完的基础上进行再分，所以无论怎么分割，最终饼的总和是不变的，始终为 1
+
+
+上面是一个具体的例子。对于一个上下文 w，所有可能的中心词的概率之和一定为 1，即所有叶子节点的输出结果之和一定为 1.
+2.CBOW 模型会不会训练中心词的词向量呢？
+
+从单词训练来说的话，并不会训练中心词的词向量，因为模型的输入是上下文的词向量，其中不包含中心词的词向量，所以不会更新中心词的词向量。
+但是从多次训练来看的话，本轮的词向量肯定也会当作上下文词向量作为输入，从而进行训练。
+
+3.Hierarchical softmax 有使用 softmax 吗？
+
+虽然 Hierarchical Softmax 名字中带有 softmax，实际计算中只使用 sigmoid 进行一系列二分类（Bernoulli）预测； 这些 Bernoulli 概率在树结构中被组合，从而等价地定义了一个 Multinomial Logistic（softmax）形式的条件概率分布。
+
+Skip-gram
+skip-gram 是根据中心词预测上下文出现的概率，优化的目标也是使正确的上下文出现的概率最大化。
+
+4.为什么模型训练出来的词向量会有语义结构呢？
+
+使用 skip-gram 模型可以很容易的解释这个问题。假如有两个相似的词：“小狗”和“小猫”。那么这两个词的上下文肯定很相似，那么 skip-gram 模型的输出肯定也很相似。当训练好的模型的输出的结果很相似的时候，很大概率可以保证这两个词的词向量相似度很高，从而保证了训练出来的词向量有语义结构。
+
+Negtative Sample 模型
+NEG 的目的是用来提高训练速度和改善所得词向量质量的
+现在考虑根据上下文预测中心词，如果需要预测所有字典中的词向量的概率，这个计算量是特别大的，所以这个时候使用 Sample，采样部分的负样本，然后加上正确的样本，然后使模型输出的正确的中心词概率最大，错误的中心词概率最小即可，这部分原文章论述的很详细，此处不再过多赘述。
+5.对于同样的上下文，如何区分计算的不同的中心词的概率
+
+negtative sample 模型是输出层没有 huffman 树，而是使用二分类器进行替代，输入为上下文变量为 X，中心词 u，输出为在这个上下文中出现中心词的概率。对不同的中心词就能获得不同的概率
+
+]]></content>
+      <tags>
+        <tag>LLM</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Image-to-Image Translation with Conditional Adversarial Networks 论文</title>
+    <url>/2025/09/22/img2img/</url>
+    <content><![CDATA[Image-to-Image Translation with Conditional Adversarial Networks 论文
+​	论文原址
+1.实现的功能
+​	实现了将图片转成另外一个图片，具体使用包括：根据手稿生成画作，冬天图像转化为春天等等。
+
+2.网络模型
+
+使用有监督的GAN，通过G生成器将x转化为G(x)，然后通过D辨别器区分真实的图像和生成的图像。
+​	通俗理解GAN
+2.1 网络中的特殊点
+2.1.1 同时生成高频和低频信息
+​	低频图像主要包含整体形状，轮廓等。高频图像主要包含边缘等细节信息。
+​	模型的损失函数为：
+
+​	其中的λLL1(G)\lambda L_{L1}(G)λLL1​(G)是指通过G生成的图像和真实图像之间的差距
+
+​	这个是对整个图像进行求损失期望，理所应当的这个误差描述的是整体之间的差异，通过这个能够很	好的对低频信息进行建模。
+​	对高频信息的建模是通过PatchGAN实现的，正常的GAN其中的辨别器的输入是两个 图像，输出是	一个数值，表示辨别的结果。PatchGAN是将一个图像分为很多个小的patch，对其中的每个patch输出一	个数值，表示该patch的辨别结果。patch的输入仍然是两个图像，但是输出的是每个patch的判别结果。	将图像分成很多个patch，然后再求损失，这样的精度相比于整体一起求细节保存的是更好的，所以这个	技术能够很好的对高频信息进行建模。
+2.2模型的具体实现：
+2.2.1 生成器
+​	生成器采用的网络模型是经典的U-net：UNet
+
+​	U-Net通过将下采样时候的特征值和上采样的特征值进行结合建模，这样能够很好的保存图像的底层信息，使得生成的图像和本来的图像能够有相似的底层信息：例如根据手绘图像生成实际图像中，手绘图像的形状和实际图像的形状应该很相似。  生成器的具体代码如下：
+class UnetGenerator(nn.Module):    &quot;&quot;&quot;Create a Unet-based generator&quot;&quot;&quot;    def __init__(self, input_nc, output_nc, num_downs, ngf=64, norm_layer=nn.BatchNorm2d, use_dropout=False):        &quot;&quot;&quot;Construct a Unet generator        Parameters:            input_nc (int)  -- the number of channels in input images            output_nc (int) -- the number of channels in output images            num_downs (int) -- the number of downsamplings in UNet. For example, # if |num_downs| == 7,                                image of size 128x128 will become of size 1x1 # at the bottleneck            ngf (int)       -- the number of filters in the last conv layer            norm_layer      -- normalization layer        We construct the U-Net from the innermost layer to the outermost layer.        It is a recursive process.        &quot;&quot;&quot;        super(UnetGenerator, self).__init__()        # construct unet structure        unet_block = UnetSkipConnectionBlock(ngf * 8, ngf * 8, input_nc=None, submodule=None, norm_layer=norm_layer, innermost=True)  # add the innermost layer        for i in range(num_downs - 5):  # add intermediate layers with ngf * 8 filters            unet_block = UnetSkipConnectionBlock(ngf * 8, ngf * 8, input_nc=None, submodule=unet_block, norm_layer=norm_layer, use_dropout=use_dropout)        # gradually reduce the number of filters from ngf * 8 to ngf        unet_block = UnetSkipConnectionBlock(ngf * 4, ngf * 8, input_nc=None, submodule=unet_block, norm_layer=norm_layer)        unet_block = UnetSkipConnectionBlock(ngf * 2, ngf * 4, input_nc=None, submodule=unet_block, norm_layer=norm_layer)        unet_block = UnetSkipConnectionBlock(ngf, ngf * 2, input_nc=None, submodule=unet_block, norm_layer=norm_layer)        self.model = UnetSkipConnectionBlock(output_nc, ngf, input_nc=input_nc, submodule=unet_block, outermost=True, norm_layer=norm_layer)  # add the outermost layer    def forward(self, input):        &quot;&quot;&quot;Standard forward&quot;&quot;&quot;        return self.model(input)
+2.2.2 辨别器
+​	辨别器使用的是常规的卷积神经网络，输出的结果是每一个patch的判别结果，具体代码如下：
+class NLayerDiscriminator(nn.Module):    &quot;&quot;&quot;Defines a PatchGAN discriminator&quot;&quot;&quot;    def __init__(self, input_nc, ndf=64, n_layers=3, norm_layer=nn.BatchNorm2d):        &quot;&quot;&quot;Construct a PatchGAN discriminator        Parameters:            input_nc (int)  -- the number of channels in input images            ndf (int)       -- the number of filters in the last conv layer            n_layers (int)  -- the number of conv layers in the discriminator            norm_layer      -- normalization layer        &quot;&quot;&quot;        super(NLayerDiscriminator, self).__init__()        if type(norm_layer) == functools.partial:  # no need to use bias as BatchNorm2d has affine parameters            use_bias = norm_layer.func == nn.InstanceNorm2d        else:            use_bias = norm_layer == nn.InstanceNorm2d        kw = 4        padw = 1        sequence = [nn.Conv2d(input_nc, ndf, kernel_size=kw, stride=2, padding=padw), nn.LeakyReLU(0.2, True)]        nf_mult = 1        nf_mult_prev = 1        for n in range(1, n_layers):  # gradually increase the number of filters            nf_mult_prev = nf_mult            nf_mult = min(2**n, 8)            sequence += [nn.Conv2d(ndf * nf_mult_prev, ndf * nf_mult, kernel_size=kw, stride=2, padding=padw, bias=use_bias), norm_layer(ndf * nf_mult), nn.LeakyReLU(0.2, True)]        nf_mult_prev = nf_mult        nf_mult = min(2**n_layers, 8)        sequence += [nn.Conv2d(ndf * nf_mult_prev, ndf * nf_mult, kernel_size=kw, stride=1, padding=padw, bias=use_bias), norm_layer(ndf * nf_mult), nn.LeakyReLU(0.2, True)]        sequence += [nn.Conv2d(ndf * nf_mult, 1, kernel_size=kw, stride=1, padding=padw)]  # output 1 channel prediction map        self.model = nn.Sequential(*sequence)    def forward(self, input):        &quot;&quot;&quot;Standard forward.&quot;&quot;&quot;        return self.model(input)
+2.2.3损失函数
+def backward_D(self):    &quot;&quot;&quot;Calculate GAN loss for the discriminator&quot;&quot;&quot;    # Fake; stop backprop to the generator by detaching fake_B    fake_AB = torch.cat((self.real_A, self.fake_B), 1)  # we use conditional GANs; we need to feed both input and output to the discriminator    pred_fake = self.netD(fake_AB.detach())    self.loss_D_fake = self.criterionGAN(pred_fake, False)    # Real    real_AB = torch.cat((self.real_A, self.real_B), 1)    pred_real = self.netD(real_AB)    self.loss_D_real = self.criterionGAN(pred_real, True)    # combine loss and calculate gradients    self.loss_D = (self.loss_D_fake + self.loss_D_real) * 0.5    self.loss_D.backward()def backward_G(self):    &quot;&quot;&quot;Calculate GAN and L1 loss for the generator&quot;&quot;&quot;    # First, G(A) should fake the discriminator    fake_AB = torch.cat((self.real_A, self.fake_B), 1)    pred_fake = self.netD(fake_AB)    self.loss_G_GAN = self.criterionGAN(pred_fake, True)    # Second, G(A) = B    self.loss_G_L1 = self.criterionL1(self.fake_B, self.real_B) * self.opt.lambda_L1    # combine loss and calculate gradients    self.loss_G = self.loss_G_GAN + self.loss_G_L1    self.loss_G.backward()
+​	其中的loss_D包含两个部分，一个是输入为（真，假）的loss表示将假的误认为真的情况，一个是输入为（真，真）的loss表示将真的判别为假的情况。最后的loss为两者的平均值。 如果想要改变或者重视某一个情况的话，可以修改权重。比如有的情况下认为将假的认为是真的，这种情况是难以容忍的，所以可以将之给很高的权重a,另外一个的权重则为1-a。
+​	生成器的loss函数包含两部分，分别是生成器本身的loss。还有L1loss，表示生成的图像和真实的图像之间的区别，也是用来建模低频信息的关键。那么为什么不像判别器一样也使用（真，真），（真，假）两种情况的loss呢？ 因为生成器只关注生成的图像和真实的区别，即（真，假）的情况，并不关心判别器能否判断（真，真）的情况。从另一个角度看，就算加上（真，真）的loss，在计算梯度的时候也不会有任何影响，因为（真，真）的loss中并不包含生成器中的参数。
+3.训练结果
+3.1数据集
+​	使用facades数据集，这个数据集包含从抽象图像到真实图像的配对。
+
+3.2训练参数
+​	参数使用开源代码中默认的参数。
+3.3训练结果
+​	
+3.4测试集实际效果：
+
+4.论文中仍未解决的问题
+​	原始图像在送进生成器之前会加上随机的噪音，通过这种随机的噪音，希望对于同一个输入，输出的图像的不同的，但是在实际中这个效果并不理想，是因为之后的网络能够学习到去掉噪音。论文中尝试加入dropout，此时的dropout不仅在训练的时候使用，在测试的时候也使用随机的dropout，通过这种方式能够一定程度上生成不同的图像，但是论文中提到这个效果并没有特别理想。噪声，我们在网络的输出中只观察到较小的随机性。 所以设计能够产生高度随机输出的条件GAN，从而捕获它们所建模的条件分布的完全熵，是目前工作留下的一个重要问题。
+]]></content>
+      <tags>
+        <tag>GAN</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>wsl2下使用不同版本的cuda</title>
+    <url>/2025/09/20/wsl2%E4%B8%8B%E4%BD%BF%E7%94%A8%E4%B8%8D%E5%90%8C%E7%89%88%E6%9C%AC%E7%9A%84cuda/</url>
+    <content><![CDATA[​	在wsl2中可以下载多个版本的cuda，并且可以在终端中指定具体使用哪一个版本
+​	首先先查看默认的cuda版本：
+nvcc --version
+​	会输出如下的信息，其中的cuda版本就是当前默认使用的cuda版本
+
+​	修改使用的cuda版本，在终端中输入：
+export PATH=/usr/local/cuda-12.1/bin:$PATHexport LD_LIBRARY_PATH=/usr/local/cuda-12.1/lib64:$LD_LIBRARY_PATH
+​	上面的例子是使用cuda12.1版本的。将指定版本的cuda的path放到环境path的开头，使得能够先访问到指定版本的cuda。
+​	添加完路径之后，打印环境变量：
+printenv
+​	打印出来的path变量中cuda12.1的路径是在cuda13.0前面的，这样就能优先使用cuda12.1
+
+​	要想将指定版本设置为默认的版本，需要修改bashrc中的内容，这个文件是bash的初始化文件，打开bash之前会先执行这个文件。；先打开这个文件：
+source ~/.bashrc
+然后仍然将这些内容复制到里面去，保存之后退出：
+
+export PATH=/usr/local/cuda-12.1/bin:$PATHexport LD_LIBRARY_PATH=/usr/local/cuda-12.1/lib64:$LD_LIBRARY_PATH
+]]></content>
+      <tags>
+        <tag>wsl</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>基于自编码器补全缺失特征值</title>
+    <url>/2025/10/27/%E8%87%AA%E7%BC%96%E7%A0%81%E5%99%A8%E8%A1%A5%E5%85%A8%E7%BC%BA%E5%A4%B1%E5%80%BC/</url>
+    <content><![CDATA[Using Autoencoders and Automatic Differentiation to Reconstruct Missing Variables in a Set of Time Series
+基于自编码器补全缺失特征值
+背景：不同的样本的特征值可能不完全一致，也有可能有部分样本的特征值会有所缺失，也有可能数据的来源不一致，比如对于同一个实验，不同的实验室得到的最终数据标注特征不一定一致，当想要混合使用这些数据的时候就必须天填充缺失值。
+为了使用特征值数量不同的样本，首先就必须统一特征值的数量。那么有两种策略可以选择，一个是使用共同都有的特征，直接丢弃掉不同的特征，这种策略会导致特征值数量降低，并且有可能样本的特征值并没有交集。第二种策略是使用某种技术来填充特征值，使特征值少的样本经过填充之后与其他样本具有同样的特征。第二个策略有一个前提要求：缺失的特征值必须与其他的特征值有一定的关系。如果没有关系的话，相当于这个特征是独立于其他的，这个时候如果还使用其他的特征预测这个特征的话，无异于“猜”。
+论文中模型实现的功能：
+能够对不同的特征子集进行补全，并且缺失的特征值可以是多个。
+模型原理：
+模型训练：
+
+模型的训练就是使用自编码器进行训练，输入和输出是一致的都是特征值最全的一组样本。注意此训练的参数是自编码器中的参数。
+一旦模型训练完成之后，固定自编码器中的参数。
+预测缺失值：
+这篇论文中预测缺失值的方式与其他的方式很不一样。其他很多时候，当一个模型训练好之后，将输入送入模型，模型得到的结果就是输出。但是此处则不一样。
+模型如下所示：
+
+首先XredX_{red}Xred​是没有已有的特征，XmissX_{miss}Xmiss​是缺失的特征.将XmissX_{miss}Xmiss​看作一个参数，一个可训练的参数，初始值为0。
+然后将X送入训练好的自编码器，能够得到输出Xˇ\check{X}Xˇ，然后就能得到一个损失函数，此时的损失函数只使用已知的特征进行计算：
+
+因为自编码器的参数已经固定，损失函数输出可以看作一个只与XmissX_{miss}Xmiss​有关的函数。
+此时有一个核心思想：最优的XmissX_{miss}Xmiss​一定会使LredL_{red}Lred​最低
+那么现在问题就变成了找到最优的XmissX_{miss}Xmiss​使LredL_{red}Lred​最低，
+
+可以使用梯度下降来求得最优的XmissX_{miss}Xmiss​
+具体算法：
+
+论文中使用的自编码器的具体模型：
+
+]]></content>
+      <tags>
+        <tag>mabe</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>动手强化学习笔记</title>
+    <url>/2025/09/09/%E5%8A%A8%E6%89%8B%E5%BC%BA%E5%8C%96%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/</url>
+    <content><![CDATA[这个笔记是用于记录学习动手强化学习这本书的时候的问题疑惑以及解答，有助于之后用时查阅。
+动手强化学习这本书的网址
+第一章：多臂老虎机问题
+1. 上置信算法
+​	背景：在多臂老虎机问题中，在使用贪心算法的时候，如果有已经尝试过很多次的杆子，并且这个杆子的期望还比其他的高，那么就会很大的概率继续选择这个杆子，但是这个只是局部最优值，因为有可能有其他期望更高的杆子因为尝试的次数很少，所以分布不能被很好的表示。所以引用不确定性度量U(a),表示一个动作的确定程度，它会随着一个动作被尝试次数的增加而减小。
+​	在考研概率论中有这样一个公式 ：
+
+这个公式是用来衡量测量值与实际值之间的分布。
+​	在这里引入另外一个不等式：霍夫丁不等式 X是独立同分布的随机变量，是 x‾n\overline{x}_nxn​ 是已经观测到的样本均值，n是观测数量
+uuu是均值。这个公式是用来衡量样本期望和实际期望的分布的
+
+​	现在我们将霍夫丁不等式运用于多臂老虎机问题中。将Qˇ(a)\check{Q}(a)Qˇ​(a) (动作a的奖励)代替 x‾n\overline{x}_nxn​，让参数u=Uˇt(a)u=\check{U}_t(a)u=Uˇt​(a)
+n=Nt(a)n=N_t(a)n=Nt​(a) ，E(x)=Qt(a)E(x)=Q_t(a)E(x)=Qt​(a)表示a这个动作执行了的次数，公式转化为如下：
+P{Qt(a)≥Qˇ(a)+Uˇt(a)}≤e−2Nt(a)Uˇt2(a)\begin{align}
+P \{Q_t(a) \geq \check{Q}(a)+\check{U}_t(a)\}\leq e^{-2N_t(a)\check{U}_t^2(a)}
+\end{align}
+P{Qt​(a)≥Qˇ​(a)+Uˇt​(a)}≤e−2Nt​(a)Uˇt2​(a)​​
+​	现在令 e−2Nt(a)Uˇt2(a)=pe^{-2N_t(a)\check{U}_t^2(a)}=pe−2Nt​(a)Uˇt2​(a)=p   当Uˇt2(a)\check{U}_t^2(a)Uˇt2​(a) 值变小时，p的值会变大，因此1-p则会变的小。然后对上面的式子进行基础变形得到：
+P{Qt(a)−Qˇ(a)&lt;Uˇt(a)}&gt;1−pP \{Q_t(a)- \check{Q}(a) &lt; \check{U}_t(a)\}&gt; 1-p
+P{Qt​(a)−Qˇ​(a)&lt;Uˇt​(a)}&gt;1−p
+​	因为Uˇt(a)\check{U}_t(a)Uˇt​(a)会随着a的动作进行的次数增加而减少，所以可以理解为随着次数的增加，观察到的期望和实际的期望会越来越接近，即探测到了分布越真实。那么怎么鼓励多探测到其他的分布呢？ 当Uˇt(a)\check{U}_t(a)Uˇt​(a) 减小的时候1-p则就会减小，这样的话继续使用该分布的概率就会降低，从而促进多探测其他的分布。 这其实也解释了不确定性分布这个名字的含义：这个值越大，表明这个分布探测的越不确定，反之则越确定。
+​	再将上面的式子进行变形得到：
+P{Qt(a)&lt;Uˇt(a)+Qˇ(a)}&gt;1−pP \{Q_t(a) &lt; \check{U}_t(a)+\check{Q}(a)\}&gt; 1-p
+P{Qt​(a)&lt;Uˇt​(a)+Qˇ​(a)}&gt;1−p
+​	此处的Uˇt(a)+Qˇ(a)\check{U}_t(a)+\check{Q}(a)Uˇt​(a)+Qˇ​(a) 就是奖励上界，在多头老虎机问题中，拉动每根拉杆的期望奖励只有一个较小的概率p超过这个上界。那么怎么鼓励多探测到其他的拉杆呢？Uˇt(a)\check{U}_t(a)Uˇt​(a) 会随着莫一个拉杆增加的次数而减小，但是并不完全意味着奖励上界会减小，因为Qˇ(a)\check{Q}(a)Qˇ​(a) 可能会随着次数的上涨而更加准确（比如，一个拉杆的奖励期望为0.8，但是前4次都是0，此时Qˇ(a)\check{Q}(a)Qˇ​(a) 为0 如果继续尝试这个拉杆之后大概率会使Qˇ(a)\check{Q}(a)Qˇ​(a)有所提升），但是如果一个拉杆已经探测了很多次了，这个时候Qˇ(a)\check{Q}(a)Qˇ​(a)会趋向于一个稳定的值，那么继续尝试这个杠杆会使Uˇt(a)+Qˇ(a)\check{U}_t(a)+\check{Q}(a)Uˇt​(a)+Qˇ​(a)有所下降。这样就有助于多去尝试其他的拉杆。 所以每次著需要选择Uˇt(a)+Qˇ(a)\check{U}_t(a)+\check{Q}(a)Uˇt​(a)+Qˇ​(a)值最大的拉杆就能达到这一个效果。
+​	然后将p设置为1/t（t为到此时所有拉杆尝试的总次数），为什么要这样设置呢？为了让置信区间宽度随时间 t 缓慢缩小由上面的式子可以看出当p越小时Qt(a)Q_t(a)Qt​(a)的置信区间也会越小，从而保证在长期运行中既能覆盖真实均值，又能逐渐减少不必要的探索，最终达到近似最优的“探索-利用”平衡。然后解出来下列公式：
+
+​	同时，我们设定一个系数c来控制不确定性的比重，此时每次只需要这样选择a即可.
+第二章：马尔可夫决策
+1.马尔可夫决策：
+​	首先明确强化学习所需要的东西，由下图所示：强化学习需要状态StS_tSt​，奖励 RtR_tRt​，动作AtA_tAt​,环境MDP。
+
+​	现在先考虑没有动作的马尔可夫决策，其中状态为SSS组成，奖励r(s)r(s)r(s) 表示转移到状态s的奖励，例如下图中从S1-&gt;S2的奖励为-2.环境MDP为状态之间的转换路径以及其概率，使用PPP表示状态矩阵。
+
+​	现在已经有了强化学习所需要的状态和环境了，此时奖励r(s)r(s)r(s)不等于强化学习所需要的奖励RtR_tRt​，因为S(t)S(t)S(t)仅仅只表示转移到状态s的奖励，并不能表示实际的奖励期望，因为奖励RtR_tRt​往往不仅仅只考虑下一步的奖励，还考虑之后的步骤。在一个马尔可夫奖励过程中，从第时刻状态开始，直到终止状态时，所有奖励的衰减之和称为回报GtG_tGt​（Return)，公式如下： 其中为什么要加上RtR_tRt​本身呢，因为G_t是计算的是其他状态转化到莫个状态的期望，那么理所应当需要把转到的这个状态也加上，所以GtG_tGt​表示的是转到某个状态的奖励。
+
+​	现在想要获得奖励函数RtR_tRt​，这里奖励可以用每一个状态的期望进行代替，此处可以使用递归树的方式计算，要计算V(S1)V(S_1)V(S1​)=r(S1)r(S_1)r(S1​)+r(0.1∗V(S2)+0.9∗V(S1))r(0.1*V(S_2)+0.9*V(S_1))r(0.1∗V(S2​)+0.9∗V(S1​)) 然后V(S2)V(S_2)V(S2​)也可以像这样继续展开，写成笼统的公式为：
+
+​	也可以写成：
+
+​	然后根据这个式子可以得到解析解：
+
+​	此时就能得到每一个节点的奖励，其中表示如果转到这个节点的话的期望奖励。
+​	上面的马尔可夫决策没有加入强化学习所需要的动作，现在将动作也加入到这一个过程中，同时奖励也将发生改变。下图是一个具体的例子：
+
+​	某一个状态可能对应着几个不同的动作，具体选择哪个动作，这个在深度学习中是交给Agent做的，当Agent做出了一个动作之后，状态的改变可能也不是固定的，也可以以不同的概率转到不同的状态，例如上图概率前往的动作，并不只会转到某一个特定的状态中，而是分别以0.2，0.4，0.4的概率转到 S2,S3,S4S_2,S_3,S_4S2​,S3​,S4​.
+​	那么在状态sss执行完某一个动作aaa的奖励值应该为：
+
+​	例如概率前往这个动作的奖励期望就是：1+r(0.2∗V(S2)+0.4∗V(S3)+0.4∗V(S4))1+r(0.2*V(S_2)+0.4*V(S_3)+0.4*V(S_4))1+r(0.2∗V(S2​)+0.4∗V(S3​)+0.4∗V(S4​))
+​	其中的V(s)V(s)V(s)和没有加入动作时的计算方式并不一样，计算公式为：
+
+​	这里不同于没有添加动作（MRP）的有所区别，为了使用MRP的解析解，需要做一下的处理：
+
+
+​	这两个将动作给边缘化，通俗来说就是提前计算所有动作的可能性，将之添加到奖励中和环境中。
+2.占用量
+​	不同的策略产生的路径可能会不同，因此动作和状态的访问会有所不同，比如有的策略会偏向于执行某一个策略或者跳转到某一个状态，为了评估每一个状态和动作的使用度量，给出状态访问分布和占用度量的公式：
+​	状态访问分布：表示的是每一个状态被访问次数的分布，例如：vπ(s1)=0.5v^\pi(s_1)=0.5vπ(s1​)=0.5 表示在策略 π 下，从长远来看，智能体大约有 50% 的折扣加权访问时间 在状态 S1S_1S1​。
+
+​	其中Ptπ(s)P_t^\pi(s)Ptπ​(s)表示在示采取策略π\piπ使得智能体在t时刻状态s为的概率。
+​	占用度量：表示的是每一个 动作-状态 被访问次数的分布
+
+​	并且这两个可以进行相互转化：
+
+第三章：时序差分算法
+1.无模型强化学习
+​	有模型强化学习是知道与agent交互的环境的，并且知道执行动作的奖励和状态转移函数的例如：
+
+​	无模型的强化学习算法不需要事先知道环境的奖励函数和状态转移函数，但是仍然知道每个状态下可以选择的所有动作，具体选择哪个动作由策略决定。这样更加符合实际情况。如下图所示：
+
+2.时序差分方法
+​	这个方法是为了在无模型强化学习中计算每个状态的价值估计，使用到了蒙特卡洛和动态规划，其中通过多次经过同一个状态然后再估计价值是使用了蒙特卡洛的估计方式，将问题分成子问题运用到动态规划。
+​	具体更新的公式为：这里使用的是增量式更新（即每一次都能直接更新状态的价值，不用使用一个值记录总价值然后等遍历完再计算平均值。）然后α\alphaα 表示更新步长，有点类似于学习率。
+
+​	公式中的V(St+1)V(S_{t+1})V(St+1​) 表示下一个状态的估计价值，那么既然不知道动作前往的下一个动作是什么，怎么知道下一个状态是什么呢？
+​	通过于环境交互，在某一个状态的时候可以根据当前的策略选择某一个动作，然后执行这个动作，然后环境给的反馈值，同理，环境也会给出奖励值，所以每次要更新一个节点，需要执行完下一个动作才能进行更新。
+​	通过大量样本的学习之后，就能得到每个状态的估计价值。但是想要得到具体的最优策略的话，只使用每个状态的价值并不够，因为无模型中不知道状态转移函数，不能够通过下列函数计算出动作的价值：
+​	没有动作的价值函数就很难根据贪婪策略得到具体的策略，所以引出Sarsa算法估算动作的价值函数。
+3.Sarsa
+​	类似于上面的计算状态价值，通过与环境交互获得下一个状态是什么，以及获得的奖励来更新自己的状态，动作的价值也可以使用同样的时序差分进行估算。
+
+​	执行完一个动作Q(St,at)Q(S_t,a_t)Q(St​,at​)之后，环境会给出奖励rtr_trt​和下一个状态St+1S_{t+1}St+1​然后在St+1S_{t+1}St+1​ 根据ϵ−\epsilon-ϵ−贪婪策略会选出下一个动作at+1a_{t+1}at+1​然后就能得Q(st+1,at+1)Q(s_{t+1},a_{t+1})Q(st+1​,at+1​) 。这里直接使用rt,Q(st+1,at+1)r_t,Q(s_{t+1},a_{t+1})rt​,Q(st+1​,at+1​)来表示当前时间步动作的价值估计，其中rtr_trt​是环境给出的准确值，但是Q(st+1,at+1)Q(s_{t+1},a_{t+1})Q(st+1​,at+1​)也是一个估计值，使用估计值来估计值可能会造成收敛很慢，这个时候可以想到，多使用准确值不就能提高估计准确度嘛，所以引出多步Sarsa。
+​	上面的每次只使用一步真实值，多步Sarsa使用多步的真实值，具体而言就是：
+
+​	考虑了多步的奖励，使得收敛速度更加快。
+​	单步的结果图：
+
+​	多步的结果图：
+
+4.Q-learning算法
+​	Q-learning算法和Sarsa算法一样都是来估算动作的价值函数的，只不过更新函数不一样，Q-learning函数的更新方式为：
+
+​	其中下一个状态St+1S_{t+1}St+1​的动作并不由ϵ−\epsilon-ϵ−贪婪策略选出，这是和Sarsa的区别。
+​	Q-learning的执行过程为:
+
+​	其中只是在更新时用到了，但是在实际的选择动作往下进行的时候仍然是使用ϵ−\epsilon-ϵ−贪婪策略。举一个具体的例子，此时要更新Q(S1,a1)Q(S_1,a_1)Q(S1​,a1​)，首先要根据ϵ−\epsilon-ϵ−贪婪策略在状态S1S_1S1​选出a1a_1a1​,然后执行这个动作得到奖励rrr和下一个状态s2s_2s2​，然后找到s2s_2s2​状态下所有能执行的动作中价值最高的那一个按照上面公式尽心更新Q(s1,a1)Q(s_1,a_1)Q(s1​,a1​),这个是和Saras的区别。更新完之后转到状态s2s_2s2​然后再根据ϵ−\epsilon-ϵ−贪婪策略选出动作（此处并没有选择动作中价值最高的执行，所以只有在更新价值的时候才会选择价值最高的动作，实际执行的时候仍然使用的是ϵ−\epsilon-ϵ−贪婪策略)。
+​	因为价值的更新和策略并不一样，所以动作的价值逼近的值并不是原有策略的动作价值。Q-learning算法学习到的是最优策略下的动作价值。这样的算法称作离线策略，表示行为策略和目标策略不是同一个策略。
+​	Sarsa学习到的是当前执行的策略，这样的策略称作在线策略表示行为策略和目标策略是同一个策略。
+
+​	上图是Sarsa和Q-learning算法的比较，离线学习算法有一个优势是可以重复利用过往的训练样本，为什么呢？
+​	首先解释一下训练样本是什么，一个旧样本，也可以称之为经验，可能是由**(s,a,r,s′,a′)**这个几个部分组成的，分别为当前状态s，当前动作a，以及动作a产生的价值r，和下一个动作s’，和下一个动作a’。
+​	在书中第一章中详细介绍了ϵ−\epsilon-ϵ−贪婪策略，其中的ϵ\epsilonϵ并不是一直不变的，随着对各个动作的奖励估计越来越准确，ϵ\epsilonϵ的值是会减小的以达到获取更大的奖励。现在解释为什么Sarsa不能重复使用训练样本，假设一开始ϵ\epsilonϵ 为0.1，此时采样了100条经验，随后ϵ\epsilonϵ会逐渐减小到0.05，这个如果重复使用前面的100条经验就会出现错误，因为Sarsa属于在线策略，动作的价值必须逼近的是当前的策略下的价值，也就是当ϵ=0.05\epsilon=0.05ϵ=0.05的时候使用ϵ=0.1\epsilon=0.1ϵ=0.1的经验的话，动作价值函数会逼近ϵ=0.1\epsilon=0.1ϵ=0.1的动作价值，这就违背了初衷。
+​	那为什么Q-learning可以重复利用呢，因为行为策略和目标策略不是同一个策略。意味着无论用ϵ=0.05\epsilon=0.05ϵ=0.05下产生的经验还是ϵ=0.1\epsilon=0.1ϵ=0.1下产生的经验，动作价值都是逼近最优的策略的价值，与使用的经验分布并没有关系，只要经验是在同一个环境下产生的就能很好的训练动作价值函数。
+第四章：DQN算法
+1.DQN算法
+​	前面的算法都是使用的是离散的状态和动作，无法对于连续的状态进行处理，所以这里引入DQN算法，DQN算法能够在连续的状态和离散的动作下估算动作的价值Q。
+​	前面的算法都是使用一个矩阵来表示所有动作的Q值，但是到连续的情况下并不能够很好的表示出所有的Q值，所以需要使用函数估计Q值，将连续的状态做为输入，输出为动作的Q值，这里估计函数的方法可以使用神经网络来实现，设计神经网络的方式有两种：1.输入为状态和动作，输出的为该动作的价值。2.输入为状态，输出所有动作的价值，例如：
+
+​	此处使用的是上述的方式2，获得了所有动作的Q值之后就可以根据输出的Q值大小进行选择对应的动作。
+
+​	其中的计算过程为：先根据当前状态sss经过神经网络得到Q(s,a)Q(s,a)Q(s,a)然后执行动作aaa,之后得到环境返回的s′s&#x27;s′,然后再将状态s′s&#x27;s′送入神经网络中得到Q(s′,a′)Q(s&#x27;,a&#x27;)Q(s′,a′)。所以说更新一次参数需要经过两次神经网络。
+​	但是现在有一个问题，这个神经网络的作用是让Q(s,a)Q(s,a)Q(s,a)逼近于r+γmax⁡a′Qw(s′,a′)r+\gamma \max _{a&#x27;} Q_w(s&#x27;,a&#x27;)r+γmaxa′​Qw​(s′,a′) 但是从上面得知$ Q_w(s’,a’)$并不是一个固定的值，而是一个经过神经网络之后的出来的值，随着神经网络参数的改变，这个值是会变动的。这个问题就好像追一个不断移动的靶子，这样势必会很难。这会导致神经网络训练的不稳定性。
+​	怎么解决这个问题呢？将靶子暂时固定就好了。将要逼近的目标γmax⁡a′Qw(s′,a′)\gamma \max _{a&#x27;} Q_w(s&#x27;,a&#x27;)γmaxa′​Qw​(s′,a′) 暂时固定下来，具体来说就是复制一个同样神经网络，参数为w′w&#x27;w′,将之叫做目标网络。在训练的时候先不不改变γmax⁡a′Qw′(s′,a′)\gamma \max _{a&#x27;} Q_{w&#x27;}(s&#x27;,a&#x27;)γmaxa′​Qw′​(s′,a′) 中神经网络的参数,这样在一定的时间内，只要s′s&#x27;s′相同，神经网络输出的动作价值也一样，这样就实现了将靶子固定住。让后只需要将靶子隔一段时间移动到一个更好的位置就能很好的训练，具体就是将$w’= w $,然后继续训练直到网络稳定。
+​	对于原来的训练网络，将r+γmax⁡a′Qw(s′,a′)r+ \gamma \max _{a&#x27;} Q_w(s&#x27;,a&#x27;)r+γmaxa′​Qw​(s′,a′)作为训练的目标，每次按照正常的训练步骤训练网络就可以，loss函数整体写成：其中同使用了两个神经网络计算loss。
+loss=1/2[Qw(s,a)−(r+γmax⁡a′Qw′(s′,a′))]loss=1/2[Q_w(s,a)-(r+\gamma \max _{a&#x27;} Q_{w&#x27;}(s&#x27;,a&#x27;))]
+loss=1/2[Qw​(s,a)−(r+γa′max​Qw′​(s′,a′))]
+​
+2.Double DQN
+]]></content>
+      <tags>
+        <tag>强化学习</tag>
+      </tags>
+  </entry>
+</search>
