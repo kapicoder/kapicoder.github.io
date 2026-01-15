@@ -1,6 +1,258 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>AttenGAN</title>
+    <url>/2026/01/15/AttenGAN/</url>
+    <content><![CDATA[AttnGAN：Fine-Grained Text to Image Generation
+论文原址
+
+简介
+AttnGAN（Attentional Generative Adversarial Network） 是首个将**词级注意力机制（word-level attention）**系统性引入 GAN 文生图（Text-to-Image, T2I）任务 的工作。
+其核心动机在于：
+
+一次性直接生成高分辨率、高语义一致性的图像极其困难；
+文本描述往往包含多个语义成分，不同词语应作用于图像的不同空间区域；
+仅依赖全局句向量会导致细节缺失或语义漂移。
+
+因此，AttnGAN 采用了两项关键设计：
+
+多阶段逐步生成（Multi-stage Generation）：从低分辨率到高分辨率逐步细化图像；
+词级注意力机制（Fine-grained Attention）：在生成过程中，让不同词动态关注不同的图像区域。
+
+下图是论文中给出的直观示例：
+
+不同颜色、形态相关的词，对应关注图像中不同的局部区域。
+
+
+
+模型整体结构
+AttnGAN 的整体结构如下图所示：
+
+整体可以分为三大模块：
+
+文本编码器（Text Encoder）：将文本描述编码为词向量与句向量；
+多阶段生成器 + 判别器（Stacked GAN）：逐步生成高分辨率图像；
+注意力机制与 DAMSM 约束：在生成过程中引入细粒度语义对齐约束。
+
+
+文本编码（Text Encoding）
+
+词嵌入（Word Embedding）
+
+初始化一个可学习的词嵌入表（Embedding Matrix）；
+每个输入单词被映射为一个低维连续向量；
+该阶段不包含上下文信息，仅是静态词表示。
+
+设句子长度为 (T)，嵌入维度为 (d_w)：
+w1,w2,…,wT∈Rdw
+\mathbf{w}_1, \mathbf{w}_2, \ldots, \mathbf{w}_T \in \mathbb{R}^{d_w}
+w1​,w2​,…,wT​∈Rdw​
+
+BiLSTM 获取上下文词特征
+由于词语含义依赖上下文，AttnGAN 使用 双向 LSTM（BiLSTM） 对词嵌入进行编码：
+
+前向 LSTM 捕获左侧上下文；
+后向 LSTM 捕获右侧上下文；
+拼接前向与后向隐藏状态，作为最终词特征。
+
+得到：
+
+词特征矩阵：
+E=[e1,…,eT]∈RT×de
+\mathbf{E} = [\mathbf{e}_1, \ldots, \mathbf{e}_T] \in \mathbb{R}^{T \times d_e}
+E=[e1​,…,eT​]∈RT×de​
+句向量（Sentence Feature）：
+
+由 BiLSTM 最后一个前向状态和第一个后向状态拼接得到
+
+
+
+esent∈Rdse_{sent}\in \mathbf{R}^{d_s}
+esent​∈Rds​
+
+条件增强（Conditioning Augmentation, CA）
+为什么需要条件增强？
+如果直接使用确定性的句向量作为生成条件，会导致：
+
+文本到图像映射过于僵硬；
+对同一文本只能生成有限多样性的图像；
+训练不稳定，容易过拟合。
+
+因此，AttnGAN 引入 条件增强（CA），将文本条件建模为一个条件分布。
+
+CA 的具体形式
+FcaF^{ca}Fca不会直接生成数据，而是生成μ,σ\mu ,\sigmaμ,σ 然后根据这个正态分布进行取值。这样做的好处是随机性更强，对于同样的句向量，每次输出的结果会不一样。
+给定句向量 (esent)(\mathbf{e}_{sent})(esent​)，通过一个全连接网络(Fca)(F^{ca})(Fca) 输出：
+(μ,σ)=Fca(esent)
+(\boldsymbol{\mu}, \boldsymbol{\sigma}) = F^{ca}(\mathbf{e}_{sent})
+(μ,σ)=Fca(esent​)
+随后从高斯分布中采样：
+e^=μ+σ⊙ε,ε∼N(0,I)
+\hat{\mathbf{e}} = \boldsymbol{\mu} + \boldsymbol{\sigma} \odot \boldsymbol{\varepsilon}, \quad \boldsymbol{\varepsilon} \sim \mathcal{N}(0, I)
+e^=μ+σ⊙ε,ε∼N(0,I)
+上面使用重参数化技巧，不直接从N(μ,σ)N(\mu,\sigma)N(μ,σ)中进行采样的原因是这样无法传递μ,σ\mu,\sigmaμ,σ的梯度，因为是随机从分布中进行采样的，所以通过在N(0,I)N(0,I)N(0,I)中采样采样然后再进行缩放。
+这一步使得：
+
+同一文本在语义一致的前提下，具有随机性与多样性。
+
+
+与噪声的融合方式
+CA 输出的条件向量 (e^)(\hat{\mathbf{e}})(e^) 并不会与噪声相加，而是：
+h0=[z;e^]
+\mathbf{h}_0 = [\mathbf{z} ; \hat{\mathbf{e}}]
+h0​=[z;e^]
+其中：
+
+(z∼N(0,I))：(\mathbf{z} \sim \mathcal{N}(0, I))：(z∼N(0,I))：随机噪声；
+拼接（concatenation）后作为 Stage-I 生成器的输入。
+
+
+多阶段 GAN 生成（Stacked GAN）
+
+AttnGAN 采用 多阶段生成结构，每一阶段对应一个分辨率。
+生成器（Generator）
+
+每个阶段的生成器输出不同尺寸的图像；
+Stage-I：生成粗略的低分辨率图像（结构与颜色）；
+后续 Stage：在前一阶段特征基础上，逐步引入细节；
+从 Stage-II 开始，引入 词级注意力机制。
+
+
+判别器（Discriminator）
+每一阶段对应一个判别器 (D_i)，其输入为：
+(Image,Sentence Feature)
+(\text{Image}, \text{Sentence Feature})
+(Image,Sentence Feature)
+判别器在训练时会测试 三类样本：
+
+真实图像 + 匹配文本（Real–Matched）
+真实图像 + 不匹配文本（Real–Mismatched）
+生成图像 + 匹配文本（Fake–Matched）
+
+
+判别器并不会直接比较“真实图像 vs 生成图像”，
+而是通过学习判别函数，隐式建模真实分布与生成分布的差异。
+
+
+词级注意力机制（Fine-Grained Attention）
+
+设计动机
+不同词语应关注图像的不同区域，例如：
+
+“red” → 颜色区域
+“beak” → 鸟喙区域
+
+因此，需要在生成过程中动态建立 词 ↔ 图像区域 的对应关系。
+
+空间映射（Word-to-Image Projection）
+词特征维度与图像特征维度不同，需进行空间映射：
+e′=Ue
+\mathbf{e}&#x27; = U \mathbf{e}
+e′=Ue
+其中：
+
+(U)：可学习的线性映射矩阵；
+(\mathbf{e}')：与图像特征通道数一致的词特征。
+
+
+注意力权重计算
+本文的注意力计算使用点乘，既直接使用每个词向量和每个点进行相乘计算这个词相对这个点的注意力，然后在词维度上做softmax，这意味着每个像素对所有词的注意力之和为1.
+对每一个图像空间位置 (i)，与所有词 (j) 计算相似度：
+si,j=(hi)Tej′
+s_{i,j} = (\mathbf{h}_i)^T \mathbf{e}&#x27;_j
+si,j​=(hi​)Tej′​
+随后对 词维度做 softmax：
+αi,j=exp⁡(si,j)∑kexp⁡(si,k)
+\alpha_{i,j} = \frac{\exp(s_{i,j})}{\sum_{k} \exp(s_{i,k})}
+αi,j​=∑k​exp(si,k​)exp(si,j​)​
+得到该位置的上下文向量：
+ci=∑jα∗i,jej′
+\mathbf{c_i} = \sum_j \alpha*{i,j} \mathbf{e}&#x27;_j
+ci​=∑j​α∗i,jej′​
+该上下文向量再与图像特征融合，用于生成。
+
+[!NOTE]
+此处是将特征进行拼接，故两个融合之后的特征维度是有所扩充的，最后再通过生成器将维度将到3维（RGB）
+
+
+DAMSM 损失（Deep Attentional Multimodal Similarity Model）
+
+DAMSM 的作用
+DAMSM（Deep Attentional Multimodal Similarity Model）是一个独立的跨模态对齐模型，其核心目标不是判别真假，而是学习图像与文本之间的语义相似度度量。
+DAMSM 的主要作用包括：
+
+约束生成图像与文本在词级（word-level）和句级（sentence-level）语义空间中保持一致；
+提供细粒度的监督信号，弥补 GAN 判别器仅能给出整体、弱语义反馈的不足。
+
+之所以称 DAMSM 提供的是“细粒度”监督，是因为其相似度计算并不局限于“整幅图像 ↔ 整句话”，而是进一步建模了：
+
+单词 ↔ 图像局部区域之间的对应关系；
+整句话 ↔ 整幅图像之间的全局语义一致性。
+
+在训练过程中，DAMSM 会计算每一个词与图像中所有空间位置特征的相似度，并通过注意力机制聚合，从而判断该词是否能够在图像的某些局部区域中被“找到”。如果某些词语（如颜色、部件或属性）未能在生成图像中得到正确体现，DAMSM 会对这些词对应的区域产生明确的负反馈梯度。
+相比之下，GAN 判别器只能判断图像与文本在整体层面是否匹配，无法指出具体是“哪个词”或“哪个区域”出现了问题。DAMSM 正是通过这种词–区域级别的跨模态对齐约束，为生成器提供了更具语义指向性的训练信号，从而显著提升生成图像在细节层面与文本描述的一致性。7.2 与判别器的区别
+
+
+
+维度
+GAN 判别器
+DAMSM
+
+
+
+
+监督位置
+整幅图像
+图像局部区域
+
+
+监督对象
+整句话
+单词 + 句子
+
+
+输出信号
+单一标量
+多词、多区域相似度
+
+
+是否可定位
+否
+是
+
+
+语义解释性
+弱
+强
+
+
+
+两者功能互补，并不重复。
+
+整体损失函数
+最终训练目标由以下几部分组成：
+
+多阶段对抗损失（GAN Loss）
+条件一致性损失（Mismatch Penalty）
+DAMSM 跨模态相似度损失
+
+L=∑iL∗GANi+λL∗DAMSM\mathcal{L} = \sum_i \mathcal{L}*{GAN}^i + \lambda \mathcal{L}*{DAMSM}
+L=i∑​L∗GANi+λL∗DAMSM
+
+总结
+AttnGAN 的核心贡献在于：
+
+将词级注意力引入 GAN 文生图；
+使用多阶段生成逐步提升图像质量；
+通过 DAMSM 提供稳定、细粒度的跨模态监督。
+
+该工作为后续高质量 T2I 模型（如 DM-GAN、DF-GAN 等）奠定了基础。
+]]></content>
+      <tags>
+        <tag>数据生成</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Gaming Behavior Predict</title>
     <url>/2025/11/08/GBP/</url>
     <content><![CDATA[Gaming Behavior Predict
@@ -68,6 +320,45 @@ X=list(range(0,len(features_sorted)-reserve_num+1))print(accuracy_list)print(tim
       </tags>
   </entry>
   <entry>
+    <title>SAR图像像素点转化为经纬度</title>
+    <url>/2025/11/24/SAR%E5%9B%BE%E5%83%8F%E5%83%8F%E7%B4%A0%E7%82%B9%E8%BD%AC%E5%8C%96%E4%B8%BA%E7%BB%8F%E7%BA%AC%E5%BA%A6/</url>
+    <content><![CDATA[SAR 图像像素点转化经纬度
+有的 tiff 格式的 SAR 图像其可能存在 CRS 和转化矩阵，可以使用这两个参数将 SAR 图像中的像素点转化为实际的经纬度。
+CRS 地理坐标是用来表示地球上的具体某一点的坐标系，类似于二维平面下有极坐标系和直角坐标系一样，CRS 也有很多种不同的坐标系，下面输出的 CRS 就是数据集使用的地理坐标系，但是这个不是标准的经纬度坐标，输出 CRS 信息是用来描述这个坐标系的具体参数，但是实际使用的时候并不需要全部了解这些参数的意义，直接整体使用即可。
+
+将像素点转化为经纬度有两步仿射变化：
+
+使用 transform 矩阵将像素点转化为该数据集下的 CRS 地理坐标系。
+将该数据集的坐标系转化为标准经纬度坐标系。
+
+
+第一步的 transform 矩阵是 tiff 图像种可以直接获取的，如下面所示。但是如果输出的是单位矩阵的话表示该数据集没有可使用的转化矩阵，没办法转化为 CRS 坐标。
+import rasterio# 打开 TIFF 文件with rasterio.open(&#x27;../dataset/AIR-SARShip-1.0/data_spilt/images/SARShip-1.0-1_r02432_c02432.tiff&#x27;) as dataset:    # 获取仿射变换矩阵    transform = dataset.transform    print(&quot;Transform:&quot;, transform)    # 获取地理坐标参考系统（CRS）    crs = dataset.crs    print(&quot;CRS:&quot;, crs)
+Transform: | 3.00, 0.00, 398197.03|| 0.00,-3.00, 117781.13|| 0.00, 0.00, 1.00|CRS: PROJCS[&quot;Projection Name = UTMUnits = Meter&quot;,GEOGCS[&quot;WGS 84&quot;,DATUM[&quot;World Geodetic System 1984&quot;,SPHEROID[&quot;WGS 84&quot;,6378137,298.257164354493]],PRIMEM[&quot;Greenwich&quot;,0],UNIT[&quot;degree&quot;,0.0174532925199433,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,30.1750794778181],PARAMETER[&quot;central_meridian&quot;,114.404640526027],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,400000],PARAMETER[&quot;false_northing&quot;,100000],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]
+
+第一个仿射矩阵是数据集自带的，但是第二仿射矩阵需要使用 pyporj 库种的 Transformer 进行计算，如下面代码所示，获得的仿射矩阵就是从数据集中的 crs 坐标系到“EPSG:4326”的映射。EPSG:4326 是经纬度的坐标系标准。
+
+from pyproj import Transformercrs = dataset.crs  #获取数据集的CRSgeo_transformer = Transformer.from_crs(crs, &quot;EPSG:4326&quot;, always_xy=True) #获得将CRS转化为标准经纬度的坐标def pixel_to_lonlat(x_pixel, y_pixel, transform_affine, geo_transformer):    &quot;&quot;&quot;Convert pixel coordinates to lon/lat using raster transform/CRS.&quot;&quot;&quot;    if transform_affine is None:        raise ValueError(&quot;TIFF file does not contain an affine transform matrix.&quot;)    x_geo, y_geo = transform_affine * (x_pixel, y_pixel)    if geo_transformer is None:        # CRS missing; return projected coordinates as best effort.        return x_geo, y_geo    lon, lat = geo_transformer.transform(x_geo,y_geo)    return lon, lat
+验证结果
+使用公开的数据集 AIR-SARShip-1.0 进行验证，原始的图像如下所示：
+
+将获得的中心经纬度在 google 地球中进行搜索，结果如下，验证了经纬度的真实性。
+
+SAR 图像裁剪
+如上面输出的仿射矩阵：
+Transform: | 3.00, 0.00, 398197.03|		  | 0.00,-3.00, 117781.13|		  | 0.00, 0.00, 1.00           |
+对于一个坐标点（x，y），仿射转化的结果是 3 _ x +398197.03, -3 _ y+ 119981.13,其中的 398197.03 和 117781.13 相当于是偏移量，是图像左上角的 CRS 坐标。3 和-3 相当于是缩放变量，是一个像素点单位对应的 CRS 坐标的单位。
+
+所以如果要对图像进行裁剪的话，需要将偏移量进行修改，才能保证子图的仿射矩阵正确。
+
+window = Window(col, row, w, h)new_transform_matrix = rasterio.windows.transform(window, dataset.transform)
+可以通过上面的方法获得裁剪之后的仿射矩阵，其中 window 是裁剪之后的图像在原图像中的框图。
+]]></content>
+      <tags>
+        <tag>SAR图像</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Nao机器人刷机</title>
     <url>/2025/04/30/Nao%E6%9C%BA%E5%99%A8%E4%BA%BA%E5%88%B7%E6%9C%BA/</url>
     <content><![CDATA[1.刷机前准备：
@@ -104,25 +395,6 @@ clean
       <tags>
         <tag>Nao机器人</tag>
       </tags>
-  </entry>
-  <entry>
-    <title>Hello world!</title>
-    <url>/2025/04/30/hello-world/</url>
-    <content><![CDATA[Welcome to Hexo! This is your very first post. Check documentation for more info. If you get any problems when using Hexo, you can find the answer in troubleshooting or you can ask me on GitHub.
-Quick Start
-Create a new post
-$ hexo new &quot;My New Post&quot;
-More info: Writing
-Run server
-$ hexo server
-More info: Server
-Generate static files
-$ hexo generate
-More info: Generating
-Deploy to remote sites
-$ hexo deploy
-More info: Deployment
-]]></content>
   </entry>
   <entry>
     <title>ROC曲线和AUC值</title>
@@ -169,42 +441,125 @@ ROC曲线有个很好的特性：当测试集中的正负样本的分布变化�
       </tags>
   </entry>
   <entry>
-    <title>SAR图像像素点转化为经纬度</title>
-    <url>/2025/11/24/SAR%E5%9B%BE%E5%83%8F%E5%83%8F%E7%B4%A0%E7%82%B9%E8%BD%AC%E5%8C%96%E4%B8%BA%E7%BB%8F%E7%BA%AC%E5%BA%A6/</url>
-    <content><![CDATA[SAR 图像像素点转化经纬度
-有的 tiff 格式的 SAR 图像其可能存在 CRS 和转化矩阵，可以使用这两个参数将 SAR 图像中的像素点转化为实际的经纬度。
-CRS 地理坐标是用来表示地球上的具体某一点的坐标系，类似于二维平面下有极坐标系和直角坐标系一样，CRS 也有很多种不同的坐标系，下面输出的 CRS 就是数据集使用的地理坐标系，但是这个不是标准的经纬度坐标，输出 CRS 信息是用来描述这个坐标系的具体参数，但是实际使用的时候并不需要全部了解这些参数的意义，直接整体使用即可。
+    <title>Hello world!</title>
+    <url>/2025/04/30/hello-world/</url>
+    <content><![CDATA[Welcome to Hexo! This is your very first post. Check documentation for more info. If you get any problems when using Hexo, you can find the answer in troubleshooting or you can ask me on GitHub.
+Quick Start
+Create a new post
+$ hexo new &quot;My New Post&quot;
+More info: Writing
+Run server
+$ hexo server
+More info: Server
+Generate static files
+$ hexo generate
+More info: Generating
+Deploy to remote sites
+$ hexo deploy
+More info: Deployment
+]]></content>
+  </entry>
+  <entry>
+    <title>Image-to-Image Translation with Conditional Adversarial Networks 论文</title>
+    <url>/2025/09/22/img2img/</url>
+    <content><![CDATA[Image-to-Image Translation with Conditional Adversarial Networks 论文
+​	论文原址
+1.实现的功能
+​	实现了将图片转成另外一个图片，具体使用包括：根据手稿生成画作，冬天图像转化为春天等等。
 
-将像素点转化为经纬度有两步仿射变化：
+2.网络模型
 
-使用 transform 矩阵将像素点转化为该数据集下的 CRS 地理坐标系。
-将该数据集的坐标系转化为标准经纬度坐标系。
+使用有监督的GAN，通过G生成器将x转化为G(x)，然后通过D辨别器区分真实的图像和生成的图像。
+​	通俗理解GAN
+2.1 网络中的特殊点
+2.1.1 同时生成高频和低频信息
+​	低频图像主要包含整体形状，轮廓等。高频图像主要包含边缘等细节信息。
+​	模型的损失函数为：
 
+​	其中的λLL1(G)\lambda L_{L1}(G)λLL1​(G)是指通过G生成的图像和真实图像之间的差距
 
-第一步的 transform 矩阵是 tiff 图像种可以直接获取的，如下面所示。但是如果输出的是单位矩阵的话表示该数据集没有可使用的转化矩阵，没办法转化为 CRS 坐标。
-import rasterio# 打开 TIFF 文件with rasterio.open(&#x27;../dataset/AIR-SARShip-1.0/data_spilt/images/SARShip-1.0-1_r02432_c02432.tiff&#x27;) as dataset:    # 获取仿射变换矩阵    transform = dataset.transform    print(&quot;Transform:&quot;, transform)    # 获取地理坐标参考系统（CRS）    crs = dataset.crs    print(&quot;CRS:&quot;, crs)
-Transform: | 3.00, 0.00, 398197.03|| 0.00,-3.00, 117781.13|| 0.00, 0.00, 1.00|CRS: PROJCS[&quot;Projection Name = UTMUnits = Meter&quot;,GEOGCS[&quot;WGS 84&quot;,DATUM[&quot;World Geodetic System 1984&quot;,SPHEROID[&quot;WGS 84&quot;,6378137,298.257164354493]],PRIMEM[&quot;Greenwich&quot;,0],UNIT[&quot;degree&quot;,0.0174532925199433,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,30.1750794778181],PARAMETER[&quot;central_meridian&quot;,114.404640526027],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,400000],PARAMETER[&quot;false_northing&quot;,100000],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]
+​	这个是对整个图像进行求损失期望，理所应当的这个误差描述的是整体之间的差异，通过这个能够很	好的对低频信息进行建模。
+​	对高频信息的建模是通过PatchGAN实现的，正常的GAN其中的辨别器的输入是两个 图像，输出是	一个数值，表示辨别的结果。PatchGAN是将一个图像分为很多个小的patch，对其中的每个patch输出一	个数值，表示该patch的辨别结果。patch的输入仍然是两个图像，但是输出的是每个patch的判别结果。	将图像分成很多个patch，然后再求损失，这样的精度相比于整体一起求细节保存的是更好的，所以这个	技术能够很好的对高频信息进行建模。
+2.2模型的具体实现：
+2.2.1 生成器
+​	生成器采用的网络模型是经典的U-net：UNet
 
-第一个仿射矩阵是数据集自带的，但是第二仿射矩阵需要使用 pyporj 库种的 Transformer 进行计算，如下面代码所示，获得的仿射矩阵就是从数据集中的 crs 坐标系到“EPSG:4326”的映射。EPSG:4326 是经纬度的坐标系标准。
+​	U-Net通过将下采样时候的特征值和上采样的特征值进行结合建模，这样能够很好的保存图像的底层信息，使得生成的图像和本来的图像能够有相似的底层信息：例如根据手绘图像生成实际图像中，手绘图像的形状和实际图像的形状应该很相似。  生成器的具体代码如下：
+class UnetGenerator(nn.Module):    &quot;&quot;&quot;Create a Unet-based generator&quot;&quot;&quot;    def __init__(self, input_nc, output_nc, num_downs, ngf=64, norm_layer=nn.BatchNorm2d, use_dropout=False):        &quot;&quot;&quot;Construct a Unet generator        Parameters:            input_nc (int)  -- the number of channels in input images            output_nc (int) -- the number of channels in output images            num_downs (int) -- the number of downsamplings in UNet. For example, # if |num_downs| == 7,                                image of size 128x128 will become of size 1x1 # at the bottleneck            ngf (int)       -- the number of filters in the last conv layer            norm_layer      -- normalization layer        We construct the U-Net from the innermost layer to the outermost layer.        It is a recursive process.        &quot;&quot;&quot;        super(UnetGenerator, self).__init__()        # construct unet structure        unet_block = UnetSkipConnectionBlock(ngf * 8, ngf * 8, input_nc=None, submodule=None, norm_layer=norm_layer, innermost=True)  # add the innermost layer        for i in range(num_downs - 5):  # add intermediate layers with ngf * 8 filters            unet_block = UnetSkipConnectionBlock(ngf * 8, ngf * 8, input_nc=None, submodule=unet_block, norm_layer=norm_layer, use_dropout=use_dropout)        # gradually reduce the number of filters from ngf * 8 to ngf        unet_block = UnetSkipConnectionBlock(ngf * 4, ngf * 8, input_nc=None, submodule=unet_block, norm_layer=norm_layer)        unet_block = UnetSkipConnectionBlock(ngf * 2, ngf * 4, input_nc=None, submodule=unet_block, norm_layer=norm_layer)        unet_block = UnetSkipConnectionBlock(ngf, ngf * 2, input_nc=None, submodule=unet_block, norm_layer=norm_layer)        self.model = UnetSkipConnectionBlock(output_nc, ngf, input_nc=input_nc, submodule=unet_block, outermost=True, norm_layer=norm_layer)  # add the outermost layer    def forward(self, input):        &quot;&quot;&quot;Standard forward&quot;&quot;&quot;        return self.model(input)
+2.2.2 辨别器
+​	辨别器使用的是常规的卷积神经网络，输出的结果是每一个patch的判别结果，具体代码如下：
+class NLayerDiscriminator(nn.Module):    &quot;&quot;&quot;Defines a PatchGAN discriminator&quot;&quot;&quot;    def __init__(self, input_nc, ndf=64, n_layers=3, norm_layer=nn.BatchNorm2d):        &quot;&quot;&quot;Construct a PatchGAN discriminator        Parameters:            input_nc (int)  -- the number of channels in input images            ndf (int)       -- the number of filters in the last conv layer            n_layers (int)  -- the number of conv layers in the discriminator            norm_layer      -- normalization layer        &quot;&quot;&quot;        super(NLayerDiscriminator, self).__init__()        if type(norm_layer) == functools.partial:  # no need to use bias as BatchNorm2d has affine parameters            use_bias = norm_layer.func == nn.InstanceNorm2d        else:            use_bias = norm_layer == nn.InstanceNorm2d        kw = 4        padw = 1        sequence = [nn.Conv2d(input_nc, ndf, kernel_size=kw, stride=2, padding=padw), nn.LeakyReLU(0.2, True)]        nf_mult = 1        nf_mult_prev = 1        for n in range(1, n_layers):  # gradually increase the number of filters            nf_mult_prev = nf_mult            nf_mult = min(2**n, 8)            sequence += [nn.Conv2d(ndf * nf_mult_prev, ndf * nf_mult, kernel_size=kw, stride=2, padding=padw, bias=use_bias), norm_layer(ndf * nf_mult), nn.LeakyReLU(0.2, True)]        nf_mult_prev = nf_mult        nf_mult = min(2**n_layers, 8)        sequence += [nn.Conv2d(ndf * nf_mult_prev, ndf * nf_mult, kernel_size=kw, stride=1, padding=padw, bias=use_bias), norm_layer(ndf * nf_mult), nn.LeakyReLU(0.2, True)]        sequence += [nn.Conv2d(ndf * nf_mult, 1, kernel_size=kw, stride=1, padding=padw)]  # output 1 channel prediction map        self.model = nn.Sequential(*sequence)    def forward(self, input):        &quot;&quot;&quot;Standard forward.&quot;&quot;&quot;        return self.model(input)
+2.2.3损失函数
+def backward_D(self):    &quot;&quot;&quot;Calculate GAN loss for the discriminator&quot;&quot;&quot;    # Fake; stop backprop to the generator by detaching fake_B    fake_AB = torch.cat((self.real_A, self.fake_B), 1)  # we use conditional GANs; we need to feed both input and output to the discriminator    pred_fake = self.netD(fake_AB.detach())    self.loss_D_fake = self.criterionGAN(pred_fake, False)    # Real    real_AB = torch.cat((self.real_A, self.real_B), 1)    pred_real = self.netD(real_AB)    self.loss_D_real = self.criterionGAN(pred_real, True)    # combine loss and calculate gradients    self.loss_D = (self.loss_D_fake + self.loss_D_real) * 0.5    self.loss_D.backward()def backward_G(self):    &quot;&quot;&quot;Calculate GAN and L1 loss for the generator&quot;&quot;&quot;    # First, G(A) should fake the discriminator    fake_AB = torch.cat((self.real_A, self.fake_B), 1)    pred_fake = self.netD(fake_AB)    self.loss_G_GAN = self.criterionGAN(pred_fake, True)    # Second, G(A) = B    self.loss_G_L1 = self.criterionL1(self.fake_B, self.real_B) * self.opt.lambda_L1    # combine loss and calculate gradients    self.loss_G = self.loss_G_GAN + self.loss_G_L1    self.loss_G.backward()
+​	其中的loss_D包含两个部分，一个是输入为（真，假）的loss表示将假的误认为真的情况，一个是输入为（真，真）的loss表示将真的判别为假的情况。最后的loss为两者的平均值。 如果想要改变或者重视某一个情况的话，可以修改权重。比如有的情况下认为将假的认为是真的，这种情况是难以容忍的，所以可以将之给很高的权重a,另外一个的权重则为1-a。
+​	生成器的loss函数包含两部分，分别是生成器本身的loss。还有L1loss，表示生成的图像和真实的图像之间的区别，也是用来建模低频信息的关键。那么为什么不像判别器一样也使用（真，真），（真，假）两种情况的loss呢？ 因为生成器只关注生成的图像和真实的区别，即（真，假）的情况，并不关心判别器能否判断（真，真）的情况。从另一个角度看，就算加上（真，真）的loss，在计算梯度的时候也不会有任何影响，因为（真，真）的loss中并不包含生成器中的参数。
+3.训练结果
+3.1数据集
+​	使用facades数据集，这个数据集包含从抽象图像到真实图像的配对。
 
-from pyproj import Transformercrs = dataset.crs  #获取数据集的CRSgeo_transformer = Transformer.from_crs(crs, &quot;EPSG:4326&quot;, always_xy=True) #获得将CRS转化为标准经纬度的坐标def pixel_to_lonlat(x_pixel, y_pixel, transform_affine, geo_transformer):    &quot;&quot;&quot;Convert pixel coordinates to lon/lat using raster transform/CRS.&quot;&quot;&quot;    if transform_affine is None:        raise ValueError(&quot;TIFF file does not contain an affine transform matrix.&quot;)    x_geo, y_geo = transform_affine * (x_pixel, y_pixel)    if geo_transformer is None:        # CRS missing; return projected coordinates as best effort.        return x_geo, y_geo    lon, lat = geo_transformer.transform(x_geo,y_geo)    return lon, lat
-验证结果
-使用公开的数据集 AIR-SARShip-1.0 进行验证，原始的图像如下所示：
+3.2训练参数
+​	参数使用开源代码中默认的参数。
+3.3训练结果
+​	
+3.4测试集实际效果：
 
-将获得的中心经纬度在 google 地球中进行搜索，结果如下，验证了经纬度的真实性。
-
-SAR 图像裁剪
-如上面输出的仿射矩阵：
-Transform: | 3.00, 0.00, 398197.03|		  | 0.00,-3.00, 117781.13|		  | 0.00, 0.00, 1.00           |
-对于一个坐标点（x，y），仿射转化的结果是 3 _ x +398197.03, -3 _ y+ 119981.13,其中的 398197.03 和 117781.13 相当于是偏移量，是图像左上角的 CRS 坐标。3 和-3 相当于是缩放变量，是一个像素点单位对应的 CRS 坐标的单位。
-
-所以如果要对图像进行裁剪的话，需要将偏移量进行修改，才能保证子图的仿射矩阵正确。
-
-window = Window(col, row, w, h)new_transform_matrix = rasterio.windows.transform(window, dataset.transform)
-可以通过上面的方法获得裁剪之后的仿射矩阵，其中 window 是裁剪之后的图像在原图像中的框图。
+4.论文中仍未解决的问题
+​	原始图像在送进生成器之前会加上随机的噪音，通过这种随机的噪音，希望对于同一个输入，输出的图像的不同的，但是在实际中这个效果并不理想，是因为之后的网络能够学习到去掉噪音。论文中尝试加入dropout，此时的dropout不仅在训练的时候使用，在测试的时候也使用随机的dropout，通过这种方式能够一定程度上生成不同的图像，但是论文中提到这个效果并没有特别理想。噪声，我们在网络的输出中只观察到较小的随机性。 所以设计能够产生高度随机输出的条件GAN，从而捕获它们所建模的条件分布的完全熵，是目前工作留下的一个重要问题。
 ]]></content>
       <tags>
-        <tag>SAR图像</tag>
+        <tag>GAN</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>word2vec笔记</title>
+    <url>/2025/12/13/word2vec%E7%AC%94%E8%AE%B0/</url>
+    <content><![CDATA[word2vec 笔记
+
+word2vec 中的数据原理详解
+
+首先明确这些模型的作用：通过自监督判别任务，训练有语义结构的词向量。
+这里的的有语义结构的意思是相类似的词需要有较相近的词向量。
+基于 Hierarchical softmax 的模型
+
+CBOW 模型是根据上下文的单词来预测中心词的概率
+Ship-gram 模型是根据中心词预测上下文词汇出现的概率
+CBOW 模型
+
+对于模型的讲解原文章以及写的很好了，这里仅仅做问题补充。
+1.首先回答原文章留出的思考题：
+
+答案是也满足归一化操作，为什么呢？
+
+因为对每一个节点都是进行的 sigmod 操作，那么对于每一个非叶节点，左子节点的概率和右子节点的概率和一定是为 1 的。这样的话可以看作将一块饼分成很多块，每一次都是在上一次分完的基础上进行再分，所以无论怎么分割，最终饼的总和是不变的，始终为 1
+
+
+上面是一个具体的例子。对于一个上下文 w，所有可能的中心词的概率之和一定为 1，即所有叶子节点的输出结果之和一定为 1.
+2.CBOW 模型会不会训练中心词的词向量呢？
+
+从单词训练来说的话，并不会训练中心词的词向量，因为模型的输入是上下文的词向量，其中不包含中心词的词向量，所以不会更新中心词的词向量。
+但是从多次训练来看的话，本轮的词向量肯定也会当作上下文词向量作为输入，从而进行训练。
+
+3.Hierarchical softmax 有使用 softmax 吗？
+
+虽然 Hierarchical Softmax 名字中带有 softmax，实际计算中只使用 sigmoid 进行一系列二分类（Bernoulli）预测； 这些 Bernoulli 概率在树结构中被组合，从而等价地定义了一个 Multinomial Logistic（softmax）形式的条件概率分布。
+
+Skip-gram
+skip-gram 是根据中心词预测上下文出现的概率，优化的目标也是使正确的上下文出现的概率最大化。
+
+4.为什么模型训练出来的词向量会有语义结构呢？
+
+使用 skip-gram 模型可以很容易的解释这个问题。假如有两个相似的词：“小狗”和“小猫”。那么这两个词的上下文肯定很相似，那么 skip-gram 模型的输出肯定也很相似。当训练好的模型的输出的结果很相似的时候，很大概率可以保证这两个词的词向量相似度很高，从而保证了训练出来的词向量有语义结构。
+
+Negtative Sample 模型
+NEG 的目的是用来提高训练速度和改善所得词向量质量的
+现在考虑根据上下文预测中心词，如果需要预测所有字典中的词向量的概率，这个计算量是特别大的，所以这个时候使用 Sample，采样部分的负样本，然后加上正确的样本，然后使模型输出的正确的中心词概率最大，错误的中心词概率最小即可，这部分原文章论述的很详细，此处不再过多赘述。
+5.对于同样的上下文，如何区分计算的不同的中心词的概率
+
+negtative sample 模型是输出层没有 huffman 树，而是使用二分类器进行替代，输入为上下文变量为 X，中心词 u，输出为在这个上下文中出现中心词的概率。对不同的中心词就能获得不同的概率
+
+]]></content>
+      <tags>
+        <tag>LLM</tag>
       </tags>
   </entry>
   <entry>
@@ -282,112 +637,13 @@ md文件中为：
 然后重新部署即可解决。
 如果还不能解决，在_config.butterfly.yml 中，修改以下内容字段：
 inject:  head:    - &lt;link rel=&quot;stylesheet&quot; href=&quot;/css/custom.css&quot;&gt;    # - &lt;link rel=&quot;stylesheet&quot; href=&quot;/xxx.css&quot;&gt;  bottom:    # - &lt;script src=&quot;xxxx&quot;&gt;&lt;/script&gt;
+top_iamge设置问题
+具体原因还不知道，先记录在这个地方，在文章开头的地方声明cover的时候如果是
+cover: /img/word2vec.png  这种的就会默认将封面也渲染到顶部
+但是如果是cover: /img/wod2vec.png 就不会渲染到顶部。
 ]]></content>
       <tags>
         <tag>hexo使用</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>word2vec笔记</title>
-    <url>/2025/12/13/word2vec%E7%AC%94%E8%AE%B0/</url>
-    <content><![CDATA[word2vec 笔记
-
-word2vec 中的数据原理详解
-
-首先明确这些模型的作用：通过自监督判别任务，训练有语义结构的词向量。
-这里的的有语义结构的意思是相类似的词需要有较相近的词向量。
-基于 Hierarchical softmax 的模型
-
-CBOW 模型是根据上下文的单词来预测中心词的概率
-Ship-gram 模型是根据中心词预测上下文词汇出现的概率
-CBOW 模型
-
-对于模型的讲解原文章以及写的很好了，这里仅仅做问题补充。
-1.首先回答原文章留出的思考题：
-
-答案是也满足归一化操作，为什么呢？
-
-因为对每一个节点都是进行的 sigmod 操作，那么对于每一个非叶节点，左子节点的概率和右子节点的概率和一定是为 1 的。这样的话可以看作将一块饼分成很多块，每一次都是在上一次分完的基础上进行再分，所以无论怎么分割，最终饼的总和是不变的，始终为 1
-
-
-上面是一个具体的例子。对于一个上下文 w，所有可能的中心词的概率之和一定为 1，即所有叶子节点的输出结果之和一定为 1.
-2.CBOW 模型会不会训练中心词的词向量呢？
-
-从单词训练来说的话，并不会训练中心词的词向量，因为模型的输入是上下文的词向量，其中不包含中心词的词向量，所以不会更新中心词的词向量。
-但是从多次训练来看的话，本轮的词向量肯定也会当作上下文词向量作为输入，从而进行训练。
-
-3.Hierarchical softmax 有使用 softmax 吗？
-
-虽然 Hierarchical Softmax 名字中带有 softmax，实际计算中只使用 sigmoid 进行一系列二分类（Bernoulli）预测； 这些 Bernoulli 概率在树结构中被组合，从而等价地定义了一个 Multinomial Logistic（softmax）形式的条件概率分布。
-
-Skip-gram
-skip-gram 是根据中心词预测上下文出现的概率，优化的目标也是使正确的上下文出现的概率最大化。
-
-4.为什么模型训练出来的词向量会有语义结构呢？
-
-使用 skip-gram 模型可以很容易的解释这个问题。假如有两个相似的词：“小狗”和“小猫”。那么这两个词的上下文肯定很相似，那么 skip-gram 模型的输出肯定也很相似。当训练好的模型的输出的结果很相似的时候，很大概率可以保证这两个词的词向量相似度很高，从而保证了训练出来的词向量有语义结构。
-
-Negtative Sample 模型
-NEG 的目的是用来提高训练速度和改善所得词向量质量的
-现在考虑根据上下文预测中心词，如果需要预测所有字典中的词向量的概率，这个计算量是特别大的，所以这个时候使用 Sample，采样部分的负样本，然后加上正确的样本，然后使模型输出的正确的中心词概率最大，错误的中心词概率最小即可，这部分原文章论述的很详细，此处不再过多赘述。
-5.对于同样的上下文，如何区分计算的不同的中心词的概率
-
-negtative sample 模型是输出层没有 huffman 树，而是使用二分类器进行替代，输入为上下文变量为 X，中心词 u，输出为在这个上下文中出现中心词的概率。对不同的中心词就能获得不同的概率
-
-]]></content>
-      <tags>
-        <tag>LLM</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Image-to-Image Translation with Conditional Adversarial Networks 论文</title>
-    <url>/2025/09/22/img2img/</url>
-    <content><![CDATA[Image-to-Image Translation with Conditional Adversarial Networks 论文
-​	论文原址
-1.实现的功能
-​	实现了将图片转成另外一个图片，具体使用包括：根据手稿生成画作，冬天图像转化为春天等等。
-
-2.网络模型
-
-使用有监督的GAN，通过G生成器将x转化为G(x)，然后通过D辨别器区分真实的图像和生成的图像。
-​	通俗理解GAN
-2.1 网络中的特殊点
-2.1.1 同时生成高频和低频信息
-​	低频图像主要包含整体形状，轮廓等。高频图像主要包含边缘等细节信息。
-​	模型的损失函数为：
-
-​	其中的λLL1(G)\lambda L_{L1}(G)λLL1​(G)是指通过G生成的图像和真实图像之间的差距
-
-​	这个是对整个图像进行求损失期望，理所应当的这个误差描述的是整体之间的差异，通过这个能够很	好的对低频信息进行建模。
-​	对高频信息的建模是通过PatchGAN实现的，正常的GAN其中的辨别器的输入是两个 图像，输出是	一个数值，表示辨别的结果。PatchGAN是将一个图像分为很多个小的patch，对其中的每个patch输出一	个数值，表示该patch的辨别结果。patch的输入仍然是两个图像，但是输出的是每个patch的判别结果。	将图像分成很多个patch，然后再求损失，这样的精度相比于整体一起求细节保存的是更好的，所以这个	技术能够很好的对高频信息进行建模。
-2.2模型的具体实现：
-2.2.1 生成器
-​	生成器采用的网络模型是经典的U-net：UNet
-
-​	U-Net通过将下采样时候的特征值和上采样的特征值进行结合建模，这样能够很好的保存图像的底层信息，使得生成的图像和本来的图像能够有相似的底层信息：例如根据手绘图像生成实际图像中，手绘图像的形状和实际图像的形状应该很相似。  生成器的具体代码如下：
-class UnetGenerator(nn.Module):    &quot;&quot;&quot;Create a Unet-based generator&quot;&quot;&quot;    def __init__(self, input_nc, output_nc, num_downs, ngf=64, norm_layer=nn.BatchNorm2d, use_dropout=False):        &quot;&quot;&quot;Construct a Unet generator        Parameters:            input_nc (int)  -- the number of channels in input images            output_nc (int) -- the number of channels in output images            num_downs (int) -- the number of downsamplings in UNet. For example, # if |num_downs| == 7,                                image of size 128x128 will become of size 1x1 # at the bottleneck            ngf (int)       -- the number of filters in the last conv layer            norm_layer      -- normalization layer        We construct the U-Net from the innermost layer to the outermost layer.        It is a recursive process.        &quot;&quot;&quot;        super(UnetGenerator, self).__init__()        # construct unet structure        unet_block = UnetSkipConnectionBlock(ngf * 8, ngf * 8, input_nc=None, submodule=None, norm_layer=norm_layer, innermost=True)  # add the innermost layer        for i in range(num_downs - 5):  # add intermediate layers with ngf * 8 filters            unet_block = UnetSkipConnectionBlock(ngf * 8, ngf * 8, input_nc=None, submodule=unet_block, norm_layer=norm_layer, use_dropout=use_dropout)        # gradually reduce the number of filters from ngf * 8 to ngf        unet_block = UnetSkipConnectionBlock(ngf * 4, ngf * 8, input_nc=None, submodule=unet_block, norm_layer=norm_layer)        unet_block = UnetSkipConnectionBlock(ngf * 2, ngf * 4, input_nc=None, submodule=unet_block, norm_layer=norm_layer)        unet_block = UnetSkipConnectionBlock(ngf, ngf * 2, input_nc=None, submodule=unet_block, norm_layer=norm_layer)        self.model = UnetSkipConnectionBlock(output_nc, ngf, input_nc=input_nc, submodule=unet_block, outermost=True, norm_layer=norm_layer)  # add the outermost layer    def forward(self, input):        &quot;&quot;&quot;Standard forward&quot;&quot;&quot;        return self.model(input)
-2.2.2 辨别器
-​	辨别器使用的是常规的卷积神经网络，输出的结果是每一个patch的判别结果，具体代码如下：
-class NLayerDiscriminator(nn.Module):    &quot;&quot;&quot;Defines a PatchGAN discriminator&quot;&quot;&quot;    def __init__(self, input_nc, ndf=64, n_layers=3, norm_layer=nn.BatchNorm2d):        &quot;&quot;&quot;Construct a PatchGAN discriminator        Parameters:            input_nc (int)  -- the number of channels in input images            ndf (int)       -- the number of filters in the last conv layer            n_layers (int)  -- the number of conv layers in the discriminator            norm_layer      -- normalization layer        &quot;&quot;&quot;        super(NLayerDiscriminator, self).__init__()        if type(norm_layer) == functools.partial:  # no need to use bias as BatchNorm2d has affine parameters            use_bias = norm_layer.func == nn.InstanceNorm2d        else:            use_bias = norm_layer == nn.InstanceNorm2d        kw = 4        padw = 1        sequence = [nn.Conv2d(input_nc, ndf, kernel_size=kw, stride=2, padding=padw), nn.LeakyReLU(0.2, True)]        nf_mult = 1        nf_mult_prev = 1        for n in range(1, n_layers):  # gradually increase the number of filters            nf_mult_prev = nf_mult            nf_mult = min(2**n, 8)            sequence += [nn.Conv2d(ndf * nf_mult_prev, ndf * nf_mult, kernel_size=kw, stride=2, padding=padw, bias=use_bias), norm_layer(ndf * nf_mult), nn.LeakyReLU(0.2, True)]        nf_mult_prev = nf_mult        nf_mult = min(2**n_layers, 8)        sequence += [nn.Conv2d(ndf * nf_mult_prev, ndf * nf_mult, kernel_size=kw, stride=1, padding=padw, bias=use_bias), norm_layer(ndf * nf_mult), nn.LeakyReLU(0.2, True)]        sequence += [nn.Conv2d(ndf * nf_mult, 1, kernel_size=kw, stride=1, padding=padw)]  # output 1 channel prediction map        self.model = nn.Sequential(*sequence)    def forward(self, input):        &quot;&quot;&quot;Standard forward.&quot;&quot;&quot;        return self.model(input)
-2.2.3损失函数
-def backward_D(self):    &quot;&quot;&quot;Calculate GAN loss for the discriminator&quot;&quot;&quot;    # Fake; stop backprop to the generator by detaching fake_B    fake_AB = torch.cat((self.real_A, self.fake_B), 1)  # we use conditional GANs; we need to feed both input and output to the discriminator    pred_fake = self.netD(fake_AB.detach())    self.loss_D_fake = self.criterionGAN(pred_fake, False)    # Real    real_AB = torch.cat((self.real_A, self.real_B), 1)    pred_real = self.netD(real_AB)    self.loss_D_real = self.criterionGAN(pred_real, True)    # combine loss and calculate gradients    self.loss_D = (self.loss_D_fake + self.loss_D_real) * 0.5    self.loss_D.backward()def backward_G(self):    &quot;&quot;&quot;Calculate GAN and L1 loss for the generator&quot;&quot;&quot;    # First, G(A) should fake the discriminator    fake_AB = torch.cat((self.real_A, self.fake_B), 1)    pred_fake = self.netD(fake_AB)    self.loss_G_GAN = self.criterionGAN(pred_fake, True)    # Second, G(A) = B    self.loss_G_L1 = self.criterionL1(self.fake_B, self.real_B) * self.opt.lambda_L1    # combine loss and calculate gradients    self.loss_G = self.loss_G_GAN + self.loss_G_L1    self.loss_G.backward()
-​	其中的loss_D包含两个部分，一个是输入为（真，假）的loss表示将假的误认为真的情况，一个是输入为（真，真）的loss表示将真的判别为假的情况。最后的loss为两者的平均值。 如果想要改变或者重视某一个情况的话，可以修改权重。比如有的情况下认为将假的认为是真的，这种情况是难以容忍的，所以可以将之给很高的权重a,另外一个的权重则为1-a。
-​	生成器的loss函数包含两部分，分别是生成器本身的loss。还有L1loss，表示生成的图像和真实的图像之间的区别，也是用来建模低频信息的关键。那么为什么不像判别器一样也使用（真，真），（真，假）两种情况的loss呢？ 因为生成器只关注生成的图像和真实的区别，即（真，假）的情况，并不关心判别器能否判断（真，真）的情况。从另一个角度看，就算加上（真，真）的loss，在计算梯度的时候也不会有任何影响，因为（真，真）的loss中并不包含生成器中的参数。
-3.训练结果
-3.1数据集
-​	使用facades数据集，这个数据集包含从抽象图像到真实图像的配对。
-
-3.2训练参数
-​	参数使用开源代码中默认的参数。
-3.3训练结果
-​	
-3.4测试集实际效果：
-
-4.论文中仍未解决的问题
-​	原始图像在送进生成器之前会加上随机的噪音，通过这种随机的噪音，希望对于同一个输入，输出的图像的不同的，但是在实际中这个效果并不理想，是因为之后的网络能够学习到去掉噪音。论文中尝试加入dropout，此时的dropout不仅在训练的时候使用，在测试的时候也使用随机的dropout，通过这种方式能够一定程度上生成不同的图像，但是论文中提到这个效果并没有特别理想。噪声，我们在网络的输出中只观察到较小的随机性。 所以设计能够产生高度随机输出的条件GAN，从而捕获它们所建模的条件分布的完全熵，是目前工作留下的一个重要问题。
-]]></content>
-      <tags>
-        <tag>GAN</tag>
       </tags>
   </entry>
   <entry>

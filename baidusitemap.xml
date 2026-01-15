@@ -1,47 +1,51 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://kapicoder.github.io/2025/09/09/%E5%8A%A8%E6%89%8B%E5%BC%BA%E5%8C%96%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/</loc>
-    <lastmod>2025-12-15</lastmod>
-  </url>
-  <url>
-    <loc>https://kapicoder.github.io/2025/04/25/hexo%E7%9A%84%E5%9F%BA%E6%9C%AC%E4%BD%BF%E7%94%A8/</loc>
-    <lastmod>2025-12-13</lastmod>
-  </url>
-  <url>
-    <loc>https://kapicoder.github.io/2025/12/13/word2vec%E7%AC%94%E8%AE%B0/</loc>
-    <lastmod>2025-12-13</lastmod>
+    <loc>https://kapicoder.github.io/2025/09/20/wsl2%E4%B8%8B%E4%BD%BF%E7%94%A8%E4%B8%8D%E5%90%8C%E7%89%88%E6%9C%AC%E7%9A%84cuda/</loc>
+    <lastmod>2026-01-15</lastmod>
   </url>
   <url>
     <loc>https://kapicoder.github.io/2025/11/24/SAR%E5%9B%BE%E5%83%8F%E5%83%8F%E7%B4%A0%E7%82%B9%E8%BD%AC%E5%8C%96%E4%B8%BA%E7%BB%8F%E7%BA%AC%E5%BA%A6/</loc>
-    <lastmod>2025-11-24</lastmod>
-  </url>
-  <url>
-    <loc>https://kapicoder.github.io/2025/11/08/GBP/</loc>
-    <lastmod>2025-11-24</lastmod>
-  </url>
-  <url>
-    <loc>https://kapicoder.github.io/2025/10/27/%E8%87%AA%E7%BC%96%E7%A0%81%E5%99%A8%E8%A1%A5%E5%85%A8%E7%BC%BA%E5%A4%B1%E5%80%BC/</loc>
-    <lastmod>2025-10-27</lastmod>
+    <lastmod>2026-01-15</lastmod>
   </url>
   <url>
     <loc>https://kapicoder.github.io/2025/10/25/ROC%E6%9B%B2%E7%BA%BF%E5%92%8CAUC%E5%80%BC/</loc>
-    <lastmod>2025-10-25</lastmod>
-  </url>
-  <url>
-    <loc>https://kapicoder.github.io/2025/09/22/img2img/</loc>
-    <lastmod>2025-09-23</lastmod>
-  </url>
-  <url>
-    <loc>https://kapicoder.github.io/2025/09/20/wsl2%E4%B8%8B%E4%BD%BF%E7%94%A8%E4%B8%8D%E5%90%8C%E7%89%88%E6%9C%AC%E7%9A%84cuda/</loc>
-    <lastmod>2025-09-20</lastmod>
-  </url>
-  <url>
-    <loc>https://kapicoder.github.io/2025/04/30/hello-world/</loc>
-    <lastmod>2025-09-11</lastmod>
+    <lastmod>2026-01-15</lastmod>
   </url>
   <url>
     <loc>https://kapicoder.github.io/2025/04/30/Nao%E6%9C%BA%E5%99%A8%E4%BA%BA%E5%88%B7%E6%9C%BA/</loc>
+    <lastmod>2026-01-15</lastmod>
+  </url>
+  <url>
+    <loc>https://kapicoder.github.io/2025/09/22/img2img/</loc>
+    <lastmod>2026-01-15</lastmod>
+  </url>
+  <url>
+    <loc>https://kapicoder.github.io/2025/04/25/hexo%E7%9A%84%E5%9F%BA%E6%9C%AC%E4%BD%BF%E7%94%A8/</loc>
+    <lastmod>2026-01-15</lastmod>
+  </url>
+  <url>
+    <loc>https://kapicoder.github.io/2025/11/08/GBP/</loc>
+    <lastmod>2026-01-15</lastmod>
+  </url>
+  <url>
+    <loc>https://kapicoder.github.io/2025/10/27/%E8%87%AA%E7%BC%96%E7%A0%81%E5%99%A8%E8%A1%A5%E5%85%A8%E7%BC%BA%E5%A4%B1%E5%80%BC/</loc>
+    <lastmod>2026-01-15</lastmod>
+  </url>
+  <url>
+    <loc>https://kapicoder.github.io/2025/09/09/%E5%8A%A8%E6%89%8B%E5%BC%BA%E5%8C%96%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/</loc>
+    <lastmod>2026-01-15</lastmod>
+  </url>
+  <url>
+    <loc>https://kapicoder.github.io/2026/01/15/AttenGAN/</loc>
+    <lastmod>2026-01-15</lastmod>
+  </url>
+  <url>
+    <loc>https://kapicoder.github.io/2025/12/13/word2vec%E7%AC%94%E8%AE%B0/</loc>
+    <lastmod>2026-01-15</lastmod>
+  </url>
+  <url>
+    <loc>https://kapicoder.github.io/2025/04/30/hello-world/</loc>
     <lastmod>2025-09-11</lastmod>
   </url>
 </urlset> 
