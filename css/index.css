@@ -1324,7 +1324,7 @@ canvas:not(#ribbon-canvas),
   }
 }
 :root {
-  --global-font-size: 20px;
+  --global-font-size: 23px;
   --global-bg: #fff;
   --font-color: #4c4948;
   --hr-border: #d2ebfd;
@@ -2036,7 +2036,7 @@ figure.highlight pre .javascript .function {
   flex: 1 auto;
   margin: 0 auto;
   padding: 40px 15px;
-  max-width: 1200px;
+  max-width: 1600px;
   width: 100%;
 }
 @media screen and (max-width: 900px) {
