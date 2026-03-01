@@ -253,6 +253,44 @@ AttnGAN 的核心贡献在于：
       </tags>
   </entry>
   <entry>
+    <title>Nao机器人刷机</title>
+    <url>/2025/04/30/Nao%E6%9C%BA%E5%99%A8%E4%BA%BA%E5%88%B7%E6%9C%BA/</url>
+    <content><![CDATA[1.刷机前准备：
+1.flasher-2.1.0.19-win64-vs2010
+2.opennao-atom-system-image-2.1.4.13_2015-08-27
+3.U盘
+所需资料夸克网盘链接 （若连接无法使用了可以去官网下载对应的资源）
+官网资源下载链接
+2.格式化U盘
+2.1 使用管理员身份打开cmd分别进行以下操作
+
+
+
+diskpart
+
+
+
+list disk
+系统会列出所有磁盘，根据大小识别U盘编号（比如 Disk 2 是你的U盘）。
+3.输入以下命令（以选中你的U盘为例，如果你的U盘是 Disk 2）：
+select disk 2
+4.然后执行以下命令，彻底清除所有分区与文件系统信息：
+clean
+5.注：如果仅仅格式化的话会出现以下问题
+
+这是因为仅仅格式话的化磁盘里面还有有文件系统，并不能直接作为刷机U盘
+6.如果出现以下图片则为成功了
+
+3.机器人刷机
+将U盘插入机器人后脑勺，长按胸口的按钮直至变蓝，等待一会他刷机完成的话就会发出声音就证明刷机成功了。
+4.机器人的使用
+机器人的使用这位写的很不错，可以快速了解对应api及功能
+]]></content>
+      <tags>
+        <tag>Nao机器人</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Gaming Behavior Predict</title>
     <url>/2025/11/08/GBP/</url>
     <content><![CDATA[Gaming Behavior Predict
@@ -317,44 +355,6 @@ X=list(range(0,len(features_sorted)-reserve_num+1))print(accuracy_list)print(tim
 ]]></content>
       <tags>
         <tag>homework</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Nao机器人刷机</title>
-    <url>/2025/04/30/Nao%E6%9C%BA%E5%99%A8%E4%BA%BA%E5%88%B7%E6%9C%BA/</url>
-    <content><![CDATA[1.刷机前准备：
-1.flasher-2.1.0.19-win64-vs2010
-2.opennao-atom-system-image-2.1.4.13_2015-08-27
-3.U盘
-所需资料夸克网盘链接 （若连接无法使用了可以去官网下载对应的资源）
-官网资源下载链接
-2.格式化U盘
-2.1 使用管理员身份打开cmd分别进行以下操作
-
-
-
-diskpart
-
-
-
-list disk
-系统会列出所有磁盘，根据大小识别U盘编号（比如 Disk 2 是你的U盘）。
-3.输入以下命令（以选中你的U盘为例，如果你的U盘是 Disk 2）：
-select disk 2
-4.然后执行以下命令，彻底清除所有分区与文件系统信息：
-clean
-5.注：如果仅仅格式化的话会出现以下问题
-
-这是因为仅仅格式话的化磁盘里面还有有文件系统，并不能直接作为刷机U盘
-6.如果出现以下图片则为成功了
-
-3.机器人刷机
-将U盘插入机器人后脑勺，长按胸口的按钮直至变蓝，等待一会他刷机完成的话就会发出声音就证明刷机成功了。
-4.机器人的使用
-机器人的使用这位写的很不错，可以快速了解对应api及功能
-]]></content>
-      <tags>
-        <tag>Nao机器人</tag>
       </tags>
   </entry>
   <entry>
@@ -444,7 +444,7 @@ window = Window(col, row, w, h)new_transform_matrix = rasterio.windows.transform
     <title>DDPM与DDIM</title>
     <url>/2026/01/29/duffsion/</url>
     <content><![CDATA[这篇文章主要记录DDPM和DDIM中的部分公式的推导，以及两者的简要对比。
-Denoising Diffusion Probabilistic Models
+Denoising Diffusion Implicit Models
 主要分为加噪音和去噪音两个部分。
 加噪音过程：
 x0(元素图像)−&gt;x1−&gt;x2....−&gt;xt(加完噪音之后的图像)x_0(元素图像) -&gt; x_1 -&gt; x_2 .... -&gt;x_t(加完噪音之后的图像)
@@ -742,22 +742,102 @@ Sigmoid（平滑过渡）
       </tags>
   </entry>
   <entry>
-    <title>Hello world!</title>
-    <url>/2025/04/30/hello-world/</url>
-    <content><![CDATA[Welcome to Hexo! This is your very first post. Check documentation for more info. If you get any problems when using Hexo, you can find the answer in troubleshooting or you can ask me on GitHub.
-Quick Start
-Create a new post
-$ hexo new &quot;My New Post&quot;
-More info: Writing
-Run server
-$ hexo server
-More info: Server
-Generate static files
-$ hexo generate
-More info: Generating
-Deploy to remote sites
-$ hexo deploy
-More info: Deployment
+    <title></title>
+    <url>/2026/01/31/freecontrol/</url>
+    <content><![CDATA[FreeControl
+Unet的最初输入：编码之后的文本，加完噪音且之后的图像，两者进行交叉注意力层之后送入unet中
+交叉注意力中：使用图像生成Q，文本信息生成K，V
+注：图像在加噪音之前还会经过一个VAE编码器
+Analysis Stage
+
+论文中的Analysis Stage主要是为了计算BtB_tBt​的
+具体流程为：
+1.根据输入的特定的文本信息，通过文生图模型生成一组seed image
+2.然后将生成这些图像的unet的中间状态进行PCA计算BtB_tBt​, 因为seed image 有一组图像，所以这一组图像在同一个unet层会生成一组特征向量，需要将这些特征向量拼接起来，然后再使用PCA计算BtB_tBt​
+3.然后根据PCA的结果选取部分特征向量作为结构指导。
+Synthesis Stage
+
+合成部分的核心是将原始生成的图像的结构和控制图像的结构图进行组合，使得前者的结构不断毕竟后者的结构以实现控制结构。
+Guiding Branch
+首先看下面蓝色部分如何生成控制图像的结构图
+其中，Input Condition 是输入的控制图像，现在想要获得这个图像在unet中某时间步和某层的结构图，可以将这个图像看作最终的输出，那么怎么根据一个结果图像反向获得其在unet的结构图呢？
+反向走这个流程：
+输入噪点图 -&gt; VAE encoder -&gt; 和文本结合送入unet -&gt; VAE decoder -&gt; result
+第一步是反向经过VAE decoder，这个的逆过程相当于经过VAE encoder，然后再是通过DDIM inversion得到在unet中具体层具体时间步的特征向量。
+DDIM inversion
+在另一篇文章DDIM于DDPM中介绍了DDIM的正向流程，其中想要获得下一步的去噪效果需要先估算干净的图像，然后再加噪音回下一个时间步。此处的结果可以相当于干净的图像，可以通过固定的加噪音到指定的时间步,公式如下所示：
+xt=αˉt x0+1−αˉt ϵ,ϵ∼N(0,I)x_t
+=
+\sqrt{\bar{\alpha}_t}\, x_0
++
+\sqrt{1-\bar{\alpha}_t}\,\epsilon,
+\quad \epsilon \sim \mathcal N(0, I)
+xt​=αˉt​​x0​+1−αˉt​​ϵ,ϵ∼N(0,I)
+有了某一步的特征之后就能获得对应的结构指导图（Structure Guidance）
+Generation Branch
+再看上面的分支，通过输入噪音图像和文本信息，可以直接正向的结构指导图
+MASK
+初始输入的噪音图像和文本送入unet中会经过cross attention层，通过这一层可以得到一个注意力图，表示当前文本对图像中注意力主要关注的地方（经过归一化处理的），这个注意力图称为mask，其中约接近1，表示越重要，越需要结构控制，接近则表示不需要结构控制。
+注：可以将mask设置为全1，此时表示所有点都需要结构控制。
+结构融合
+有了指导的结构图和当前实际的结构图之后，就需要进行使用结构指导。
+
+
+如上图公式所示，分为两个部分，第一个部分是前景指导，第二个是背景指导。
+其中 mijm_{ij}mij​是Mask中的一个点的权重,
+sts_tst​ 表示t时间步Generation Branch生成的结构图
+stg{s_t}^gst​g表示Guiding Branch生成的结构图
+此处使用MSE来表示这两者的差距并且使用注意力来控制对结构的敏感度，
+后面的部分用来惩罚不要过多控制背景。
+所以上面这个公式主要是一个惩罚项，但结构与想要的不一致的时候会变大
+内容风格控制
+添加了结构控制之后可能会影响生成的风格，所以分别计算不用结构控制生成的图像和用结构控制生成的图像的外观向量：
+
+然后得到gag_aga​来控制风格和之前相似，其中带上划线的V是不带控制结构生成的图像
+
+最终的更新公式为：
+
+其中第二项是不添加文本信息的生成噪音
+在CFG中是如此定义的：
+ϵ^t=ϵθ(xt;t,∅)+s(ϵθ(xt;t,c)−ϵθ(xt;t,∅))\hat{\epsilon}_t
+=
+\epsilon_\theta(x_t; t, \varnothing)
++
+s\big(
+\epsilon_\theta(x_t; t, c)
+-
+\epsilon_\theta(x_t; t, \varnothing)
+\big)
+ϵ^t​=ϵθ​(xt​;t,∅)+s(ϵθ​(xt​;t,c)−ϵθ​(xt​;t,∅))
+其中的意义是加上只由语义产生的噪音部分，让文本的条件被放大，然后将这个式子化简之后就能得到（7）的前两项
+补充
+PCA详解
+VAE编码器
+VAE编码器是将一张真实图像压缩到一个连续、可加噪、可扩散的 latent 表示。
+一般来说图像直接经过duffion网络，会造成参数量极大，训练时间过大
+例子，输入图像是3  *  512  * 512的，经过VAE编码器之后变成4 * 64 * 64，空间维度降低了，但是物体结构和语义分布仍在，最终经过duffion之后，再通过VAE解码器恢复到原始图像的尺寸
+VAE生成的并不是一个固定的图像，而是为每一个通道生成一个标准差和方差，然后进行采样
+VAE的训练
+VAE是单独进行训练的，不会直接和扩散模型进行训练。和自编码器一样，VAE的输入和输出都是一幅同样的图像。
+loss函数
+LVAE=∥x−x^∥⏟重建损失+β⋅KL ⁣(q(z∣x) ∥ N(0,I))⏟正则项\mathcal{L}_{\text{VAE}}
+=
+\underbrace{\|x - \hat{x}\|}_{\text{重建损失}}
++
+\beta \cdot
+\underbrace{
+\mathrm{KL}\!\left(q(z \mid x)\,\|\,\mathcal{N}(0, I)\right)
+}_{\text{正则项}}
+LVAE​=重建损失∥x−x^∥​​+β⋅正则项KL(q(z∣x)∥N(0,I))​​
+其中xxx ：原始图像（像素空间）
+x^\hat{x}x^ ：重建后的输出
+∣x−x^∣|x - \hat{x}|∣x−x^∣ ：重建损失（Reconstruction Loss）
+zzz ：潜在变量（Latent Variable）
+q(z∣x)q(z \mid x)q(z∣x) ： 编码器给出的后验分布
+N(0,I)\mathcal{N}(0, I)N(0,I) ：潜在空间的先验分布
+KL(q(z∣x),∣,N(0,I))\mathrm{KL}\left(q(z \mid x),|,\mathcal{N}(0, I)\right)KL(q(z∣x),∣,N(0,I))：KL 散度正则项
+β\betaβ ：KL 权重系数（正则强度）
+正则项的加入是为了将潜在空间的分布拉向标准正态分布，这样解码器就能从一个近似标准正态分布分布的数据中恢复原始的图像。
 ]]></content>
   </entry>
   <entry>
@@ -896,29 +976,23 @@ def backward_D(self):    &quot;&quot;&quot;Calculate GAN loss for the discrimina
       </tags>
   </entry>
   <entry>
-    <title>wsl2下使用不同版本的cuda</title>
-    <url>/2025/09/20/wsl2%E4%B8%8B%E4%BD%BF%E7%94%A8%E4%B8%8D%E5%90%8C%E7%89%88%E6%9C%AC%E7%9A%84cuda/</url>
-    <content><![CDATA[​	在wsl2中可以下载多个版本的cuda，并且可以在终端中指定具体使用哪一个版本
-​	首先先查看默认的cuda版本：
-nvcc --version
-​	会输出如下的信息，其中的cuda版本就是当前默认使用的cuda版本
-
-​	修改使用的cuda版本，在终端中输入：
-export PATH=/usr/local/cuda-12.1/bin:$PATHexport LD_LIBRARY_PATH=/usr/local/cuda-12.1/lib64:$LD_LIBRARY_PATH
-​	上面的例子是使用cuda12.1版本的。将指定版本的cuda的path放到环境path的开头，使得能够先访问到指定版本的cuda。
-​	添加完路径之后，打印环境变量：
-printenv
-​	打印出来的path变量中cuda12.1的路径是在cuda13.0前面的，这样就能优先使用cuda12.1
-
-​	要想将指定版本设置为默认的版本，需要修改bashrc中的内容，这个文件是bash的初始化文件，打开bash之前会先执行这个文件。；先打开这个文件：
-source ~/.bashrc
-然后仍然将这些内容复制到里面去，保存之后退出：
-
-export PATH=/usr/local/cuda-12.1/bin:$PATHexport LD_LIBRARY_PATH=/usr/local/cuda-12.1/lib64:$LD_LIBRARY_PATH
+    <title>Hello world!</title>
+    <url>/2025/04/30/hello-world/</url>
+    <content><![CDATA[Welcome to Hexo! This is your very first post. Check documentation for more info. If you get any problems when using Hexo, you can find the answer in troubleshooting or you can ask me on GitHub.
+Quick Start
+Create a new post
+$ hexo new &quot;My New Post&quot;
+More info: Writing
+Run server
+$ hexo server
+More info: Server
+Generate static files
+$ hexo generate
+More info: Generating
+Deploy to remote sites
+$ hexo deploy
+More info: Deployment
 ]]></content>
-      <tags>
-        <tag>wsl</tag>
-      </tags>
   </entry>
   <entry>
     <title>word2vec笔记</title>
@@ -970,6 +1044,31 @@ negtative sample 模型是输出层没有 huffman 树，而是使用二分类器
 ]]></content>
       <tags>
         <tag>LLM</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>wsl2下使用不同版本的cuda</title>
+    <url>/2025/09/20/wsl2%E4%B8%8B%E4%BD%BF%E7%94%A8%E4%B8%8D%E5%90%8C%E7%89%88%E6%9C%AC%E7%9A%84cuda/</url>
+    <content><![CDATA[​	在wsl2中可以下载多个版本的cuda，并且可以在终端中指定具体使用哪一个版本
+​	首先先查看默认的cuda版本：
+nvcc --version
+​	会输出如下的信息，其中的cuda版本就是当前默认使用的cuda版本
+
+​	修改使用的cuda版本，在终端中输入：
+export PATH=/usr/local/cuda-12.1/bin:$PATHexport LD_LIBRARY_PATH=/usr/local/cuda-12.1/lib64:$LD_LIBRARY_PATH
+​	上面的例子是使用cuda12.1版本的。将指定版本的cuda的path放到环境path的开头，使得能够先访问到指定版本的cuda。
+​	添加完路径之后，打印环境变量：
+printenv
+​	打印出来的path变量中cuda12.1的路径是在cuda13.0前面的，这样就能优先使用cuda12.1
+
+​	要想将指定版本设置为默认的版本，需要修改bashrc中的内容，这个文件是bash的初始化文件，打开bash之前会先执行这个文件。；先打开这个文件：
+source ~/.bashrc
+然后仍然将这些内容复制到里面去，保存之后退出：
+
+export PATH=/usr/local/cuda-12.1/bin:$PATHexport LD_LIBRARY_PATH=/usr/local/cuda-12.1/lib64:$LD_LIBRARY_PATH
+]]></content>
+      <tags>
+        <tag>wsl</tag>
       </tags>
   </entry>
   <entry>
