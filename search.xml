@@ -449,8 +449,8 @@ zt−1​=αt−1​z^0+σt−1​ϵ^t​
 
 为什么不直接使用xt=1−βt xt−1+βt ϵt,ϵt∼N(0,I)x_t = \sqrt{1 - \beta_t}\, x_{t-1} + \sqrt{\beta_t}\, \epsilon_t,
 \quad \epsilon_t \sim \mathcal{N}(0, I)xt​=1−βt​​xt−1​+βt​​ϵt​,ϵt​∼N(0,I) 推得
-xt−1=(xt−βt ϵt)/1−βtx_{t-1}=(x_t-\sqrt{\beta_t}\ \epsilon_t)/\sqrt{1 - \beta_t}
-xt−1​=(xt​−βt​​ ϵt​)/1−βt​​
+x_t−1=(xt−βt ϵt)/1−βtx\_{t-1}=(x_t-\sqrt{\beta_t}\ \epsilon_t)/\sqrt{1 - \beta_t}
+x_t−1=(xt​−βt​​ ϵt​)/1−βt​​
 这样直接推得下一步的去噪音效果呢？
 每一个时间步的ZtZtZt都对应的一个分布，比如“清晰度 20% + 噪声 80%”，去噪音的过程就相当于要将每一步的降噪结果放到对应的分布中去，即要将下图中的小球放到指定的台阶中去。
 如果使用直接前去噪声的方式，如右侧所示：每次直接减去噪音，可能会导致一次跳很多个台阶，并且这个错误会累积，经过多轮迭代，错误将会越来越大。
@@ -587,8 +587,8 @@ Denoising Diffusion Implicit Models
 
 
 损失函数
-$$loss=
-
+L=Ex0,ϵ,t[∥ϵ−ϵθ(xt,t)∥2]\mathcal{L}=\mathbb{E}_{x_0,\epsilon,t}\left[\lVert \epsilon-\epsilon_\theta(x_t,t)\rVert^2\right]L=Ex0​,ϵ,t​[∥ϵ−ϵθ​(xt​,t)∥2]
+与 DDPM 一致
 
 
 $(\tilde\beta_t) $的作用
@@ -767,24 +767,35 @@ More info: Deployment
 Unet的最初输入：编码之后的文本，加完噪音且之后的图像，两者进行交叉注意力层之后送入unet中
 交叉注意力中：使用图像生成Q，文本信息生成K，V
 注：图像在加噪音之前还会经过一个VAE编码器
-Analysis Stage
+结构信息发现
+论文中提到对图像的unet的中间状态进行PCA，其结果带有结构信息，所以提出了不需要为每个控制信息都额外的重新训练适配器，讲PCA得到的结构信息来控制生成图像的结构信息。
 
-论文中的Analysis Stage主要是为了计算BtB_tBt​的
+[!NOTE]
+并不是将下面这些图像作为输入经过DDIM，得到中间层的unet然后做PCA，而是将这些当作结果图像，通过DDIM的可逆性，方向推得unet中间层然后做PCA得到的。
+
+
+Analysis Stage
+上面提到图像的结构可以使用PCA来得到，那么语义的结构应该怎么得到呢？
+Analysis Stage主要是为了计算BtB_tBt​的，BtB_tBt​ 是某个语义结构子空间（structure subspace）的基，它用来提取结构表示： $$S_{t}=B_{t}^TF_{t}$$  其中Ft是unet的特征，St是结构图
+下图计算出来的相当于是以man这个词语为核心的语义结构字体空间的基
+
 具体流程为：
 1.根据输入的特定的文本信息，通过文生图模型生成一组seed image
 2.然后将生成这些图像的unet的中间状态进行PCA计算BtB_tBt​, 因为seed image 有一组图像，所以这一组图像在同一个unet层会生成一组特征向量，需要将这些特征向量拼接起来，然后再使用PCA计算BtB_tBt​
 3.然后根据PCA的结果选取部分特征向量作为结构指导。
 Synthesis Stage
+上面的内容简要介绍了怎么从文本和控制图像中提取控制结构，那么怎么将两者进行对齐呢，Synthesis Stage的核心是将原始生成的图像的结构和控制图像的结构图进行组合，使得前者的结构不断毕竟后者的结构以实现控制结构。
 
-合成部分的核心是将原始生成的图像的结构和控制图像的结构图进行组合，使得前者的结构不断毕竟后者的结构以实现控制结构。
+Synthesis Stage又分为Guiding Branch和Generation Branch两部分
 Guiding Branch
-首先看下面蓝色部分如何生成控制图像的结构图
-其中，Input Condition 是输入的控制图像，现在想要获得这个图像在unet中某时间步和某层的结构图，可以将这个图像看作最终的输出，那么怎么根据一个结果图像反向获得其在unet的结构图呢？
-反向走这个流程：
+Guiding Branch对应上图的蓝色部分
+其中，Input Condition 是输入的控制图像，是预期结果生成图像的结构。
+现在想要获得这个图像在unet中某时间步和某层的结构图，可以将这个图像看作最终的输出，然后根据一个结果图像反向获得其在unet的结构图
+正常的正向扩散模型流程是：
 输入噪点图 -&gt; VAE encoder -&gt; 和文本结合送入unet -&gt; VAE decoder -&gt; result
 第一步是反向经过VAE decoder，这个的逆过程相当于经过VAE encoder，然后再是通过DDIM inversion得到在unet中具体层具体时间步的特征向量。
 DDIM inversion
-在另一篇文章DDIM于DDPM中介绍了DDIM的正向流程，其中想要获得下一步的去噪效果需要先估算干净的图像，然后再加噪音回下一个时间步。此处的结果可以相当于干净的图像，可以通过固定的加噪音到指定的时间步,公式如下所示：
+本博客中另一篇文章DDIM于DDPM中介绍了DDIM的正向流程，其中想要获得下一步的去噪效果需要先估算干净的图像，然后再加噪音回下一个时间步。此处的结果可以相当于干净的图像，可以通过固定的加噪音到指定的时间步,公式如下所示：
 xt=αˉt x0+1−αˉt ϵ,ϵ∼N(0,I)x_t
 =
 \sqrt{\bar{\alpha}_t}\, x_0
@@ -828,7 +839,7 @@ s\big(
 \epsilon_\theta(x_t; t, \varnothing)
 \big)
 ϵ^t​=ϵθ​(xt​;t,∅)+s(ϵθ​(xt​;t,c)−ϵθ​(xt​;t,∅))
-其中的意义是加上只由语义产生的噪音部分，让文本的条件被放大，然后将这个式子化简之后就能得到（7）的前两项
+其意义是加上只由语义产生的噪音部分，让文本的条件被放大，然后将这个式子化简之后就能得到（7）的前两项
 补充
 PCA详解
 VAE编码器
