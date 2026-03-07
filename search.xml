@@ -1,44 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>Nao机器人刷机</title>
-    <url>/2025/04/30/Nao%E6%9C%BA%E5%99%A8%E4%BA%BA%E5%88%B7%E6%9C%BA/</url>
-    <content><![CDATA[1.刷机前准备：
-1.flasher-2.1.0.19-win64-vs2010
-2.opennao-atom-system-image-2.1.4.13_2015-08-27
-3.U盘
-所需资料夸克网盘链接 （若连接无法使用了可以去官网下载对应的资源）
-官网资源下载链接
-2.格式化U盘
-2.1 使用管理员身份打开cmd分别进行以下操作
-
-
-
-diskpart
-
-
-
-list disk
-系统会列出所有磁盘，根据大小识别U盘编号（比如 Disk 2 是你的U盘）。
-3.输入以下命令（以选中你的U盘为例，如果你的U盘是 Disk 2）：
-select disk 2
-4.然后执行以下命令，彻底清除所有分区与文件系统信息：
-clean
-5.注：如果仅仅格式化的话会出现以下问题
-
-这是因为仅仅格式话的化磁盘里面还有有文件系统，并不能直接作为刷机U盘
-6.如果出现以下图片则为成功了
-
-3.机器人刷机
-将U盘插入机器人后脑勺，长按胸口的按钮直至变蓝，等待一会他刷机完成的话就会发出声音就证明刷机成功了。
-4.机器人的使用
-机器人的使用这位写的很不错，可以快速了解对应api及功能
-]]></content>
-      <tags>
-        <tag>Nao机器人</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>AttenGAN</title>
     <url>/2026/01/15/AttenGAN/</url>
     <content><![CDATA[AttnGAN：Fine-Grained Text to Image Generation
@@ -358,6 +320,44 @@ X=list(range(0,len(features_sorted)-reserve_num+1))print(accuracy_list)print(tim
       </tags>
   </entry>
   <entry>
+    <title>Nao机器人刷机</title>
+    <url>/2025/04/30/Nao%E6%9C%BA%E5%99%A8%E4%BA%BA%E5%88%B7%E6%9C%BA/</url>
+    <content><![CDATA[1.刷机前准备：
+1.flasher-2.1.0.19-win64-vs2010
+2.opennao-atom-system-image-2.1.4.13_2015-08-27
+3.U盘
+所需资料夸克网盘链接 （若连接无法使用了可以去官网下载对应的资源）
+官网资源下载链接
+2.格式化U盘
+2.1 使用管理员身份打开cmd分别进行以下操作
+
+
+
+diskpart
+
+
+
+list disk
+系统会列出所有磁盘，根据大小识别U盘编号（比如 Disk 2 是你的U盘）。
+3.输入以下命令（以选中你的U盘为例，如果你的U盘是 Disk 2）：
+select disk 2
+4.然后执行以下命令，彻底清除所有分区与文件系统信息：
+clean
+5.注：如果仅仅格式化的话会出现以下问题
+
+这是因为仅仅格式话的化磁盘里面还有有文件系统，并不能直接作为刷机U盘
+6.如果出现以下图片则为成功了
+
+3.机器人刷机
+将U盘插入机器人后脑勺，长按胸口的按钮直至变蓝，等待一会他刷机完成的话就会发出声音就证明刷机成功了。
+4.机器人的使用
+机器人的使用这位写的很不错，可以快速了解对应api及功能
+]]></content>
+      <tags>
+        <tag>Nao机器人</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>ROC曲线和AUC值</title>
     <url>/2025/10/25/ROC%E6%9B%B2%E7%BA%BF%E5%92%8CAUC%E5%80%BC/</url>
     <content><![CDATA[ROC曲线和AUC值
@@ -399,6 +399,157 @@ ROC曲线有个很好的特性：当测试集中的正负样本的分布变化�
 ]]></content>
       <tags>
         <tag>动态阈值</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>SAR图像像素点转化为经纬度</title>
+    <url>/2025/11/24/SAR%E5%9B%BE%E5%83%8F%E5%83%8F%E7%B4%A0%E7%82%B9%E8%BD%AC%E5%8C%96%E4%B8%BA%E7%BB%8F%E7%BA%AC%E5%BA%A6/</url>
+    <content><![CDATA[SAR 图像像素点转化经纬度
+有的 tiff 格式的 SAR 图像其可能存在 CRS 和转化矩阵，可以使用这两个参数将 SAR 图像中的像素点转化为实际的经纬度。
+CRS 地理坐标是用来表示地球上的具体某一点的坐标系，类似于二维平面下有极坐标系和直角坐标系一样，CRS 也有很多种不同的坐标系，下面输出的 CRS 就是数据集使用的地理坐标系，但是这个不是标准的经纬度坐标，输出 CRS 信息是用来描述这个坐标系的具体参数，但是实际使用的时候并不需要全部了解这些参数的意义，直接整体使用即可。
+
+将像素点转化为经纬度有两步仿射变化：
+
+使用 transform 矩阵将像素点转化为该数据集下的 CRS 地理坐标系。
+将该数据集的坐标系转化为标准经纬度坐标系。
+
+
+第一步的 transform 矩阵是 tiff 图像种可以直接获取的，如下面所示。但是如果输出的是单位矩阵的话表示该数据集没有可使用的转化矩阵，没办法转化为 CRS 坐标。
+import rasterio# 打开 TIFF 文件with rasterio.open(&#x27;../dataset/AIR-SARShip-1.0/data_spilt/images/SARShip-1.0-1_r02432_c02432.tiff&#x27;) as dataset:    # 获取仿射变换矩阵    transform = dataset.transform    print(&quot;Transform:&quot;, transform)    # 获取地理坐标参考系统（CRS）    crs = dataset.crs    print(&quot;CRS:&quot;, crs)
+Transform: | 3.00, 0.00, 398197.03|| 0.00,-3.00, 117781.13|| 0.00, 0.00, 1.00|CRS: PROJCS[&quot;Projection Name = UTMUnits = Meter&quot;,GEOGCS[&quot;WGS 84&quot;,DATUM[&quot;World Geodetic System 1984&quot;,SPHEROID[&quot;WGS 84&quot;,6378137,298.257164354493]],PRIMEM[&quot;Greenwich&quot;,0],UNIT[&quot;degree&quot;,0.0174532925199433,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,30.1750794778181],PARAMETER[&quot;central_meridian&quot;,114.404640526027],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,400000],PARAMETER[&quot;false_northing&quot;,100000],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]
+
+第一个仿射矩阵是数据集自带的，但是第二仿射矩阵需要使用 pyporj 库种的 Transformer 进行计算，如下面代码所示，获得的仿射矩阵就是从数据集中的 crs 坐标系到“EPSG:4326”的映射。EPSG:4326 是经纬度的坐标系标准。
+
+from pyproj import Transformercrs = dataset.crs  #获取数据集的CRSgeo_transformer = Transformer.from_crs(crs, &quot;EPSG:4326&quot;, always_xy=True) #获得将CRS转化为标准经纬度的坐标def pixel_to_lonlat(x_pixel, y_pixel, transform_affine, geo_transformer):    &quot;&quot;&quot;Convert pixel coordinates to lon/lat using raster transform/CRS.&quot;&quot;&quot;    if transform_affine is None:        raise ValueError(&quot;TIFF file does not contain an affine transform matrix.&quot;)    x_geo, y_geo = transform_affine * (x_pixel, y_pixel)    if geo_transformer is None:        # CRS missing; return projected coordinates as best effort.        return x_geo, y_geo    lon, lat = geo_transformer.transform(x_geo,y_geo)    return lon, lat
+验证结果
+使用公开的数据集 AIR-SARShip-1.0 进行验证，原始的图像如下所示：
+
+将获得的中心经纬度在 google 地球中进行搜索，结果如下，验证了经纬度的真实性。
+
+SAR 图像裁剪
+如上面输出的仿射矩阵：
+Transform: | 3.00, 0.00, 398197.03|		  | 0.00,-3.00, 117781.13|		  | 0.00, 0.00, 1.00           |
+对于一个坐标点（x，y），仿射转化的结果是 3 _ x +398197.03, -3 _ y+ 119981.13,其中的 398197.03 和 117781.13 相当于是偏移量，是图像左上角的 CRS 坐标。3 和-3 相当于是缩放变量，是一个像素点单位对应的 CRS 坐标的单位。
+
+所以如果要对图像进行裁剪的话，需要将偏移量进行修改，才能保证子图的仿射矩阵正确。
+
+window = Window(col, row, w, h)new_transform_matrix = rasterio.windows.transform(window, dataset.transform)
+可以通过上面的方法获得裁剪之后的仿射矩阵，其中 window 是裁剪之后的图像在原图像中的框图。
+]]></content>
+      <tags>
+        <tag>SAR图像</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Freecontrol</title>
+    <url>/2026/02/15/freecontrol/</url>
+    <content><![CDATA[FreeControl
+Unet的最初输入：编码之后的文本，加完噪音且之后的图像，两者进行交叉注意力层之后送入unet中
+注：图像在加噪音之前还会经过一个VAE编码器
+结构信息发现
+论文中提到对图像的unet的中间状态进行PCA，其结果带有结构信息，所以提出了不需要为每个控制信息都额外的重新训练适配器，讲PCA得到的结构信息来控制生成图像的结构信息。
+
+[!NOTE]
+并不是将下面这些图像作为输入经过DDIM，得到中间层的unet然后做PCA，而是将这些当作结果图像，通过DDIM的可逆性，方向推得unet中间层然后做PCA得到的。
+
+
+Analysis Stage
+上面提到图像的结构可以使用PCA来得到，那么语义的结构应该怎么得到呢？
+Analysis Stage主要是为了计算BtB_tBt​的，BtB_tBt​ 是某个语义结构子空间（structure subspace）的基，它用来提取结构表示： St=BtTFtS_{t}=B_{t}^TF_{t}St​=BtT​Ft​ 其中Ft是unet的特征，St是结构图
+下图计算出来的相当于是以man这个词语为核心的语义结构字体空间的基
+
+具体流程为：
+1.根据输入的特定的文本信息，通过文生图模型生成一组seed image
+2.然后将生成这些图像的unet的中间状态进行PCA计算BtB_tBt​, 因为seed image 有一组图像，所以这一组图像在同一个unet层会生成一组特征向量，需要将这些特征向量拼接起来，然后再使用PCA计算BtB_tBt​
+3.然后根据PCA的结果选取部分特征向量作为结构指导。
+Synthesis Stage
+上面的内容简要介绍了怎么从文本和控制图像中提取控制结构，那么怎么将两者进行对齐呢，Synthesis Stage的核心是将原始生成的图像的结构和控制图像的结构图进行组合，使得前者的结构不断毕竟后者的结构以实现控制结构。
+
+Synthesis Stage又分为Guiding Branch和Generation Branch两部分
+Guiding Branch
+Guiding Branch对应上图的蓝色部分
+其中，Input Condition 是输入的控制图像，是预期结果生成图像的结构。
+现在想要获得这个图像在unet中某时间步和某层的结构图，可以将这个图像看作最终的输出，然后根据一个结果图像反向获得其在unet的结构图
+正常的正向扩散模型流程是：
+输入噪点图 -&gt; VAE encoder -&gt; 和文本结合送入unet -&gt; VAE decoder -&gt; result
+第一步是反向经过VAE decoder，这个的逆过程相当于经过VAE encoder，然后再是通过DDIM inversion得到在unet中具体层具体时间步的特征向量。
+DDIM inversion
+本博客中另一篇文章DDIM于DDPM中介绍了DDIM的正向流程，其中想要获得下一步的去噪效果需要先估算干净的图像，然后再加噪音回下一个时间步。此处的结果可以相当于干净的图像，可以通过固定的加噪音到指定的时间步,公式如下所示：
+xt=αˉt x0+1−αˉt ϵ,ϵ∼N(0,I)x_t
+=
+\sqrt{\bar{\alpha}_t}\, x_0
++
+\sqrt{1-\bar{\alpha}_t}\,\epsilon,
+\quad \epsilon \sim \mathcal N(0, I)
+xt​=αˉt​​x0​+1−αˉt​​ϵ,ϵ∼N(0,I)
+有了某一步的特征之后就能获得对应的结构指导图（Structure Guidance）
+Generation Branch
+再看上面的分支，通过输入噪音图像和文本信息，可以直接正向的结构指导图
+MASK
+初始输入的噪音图像和文本送入unet中会经过cross attention层，通过这一层可以得到一个注意力图，表示当前文本对图像中注意力主要关注的地方（经过归一化处理的），这个注意力图称为mask，其中约接近1，表示越重要，越需要结构控制，接近则表示不需要结构控制。
+注：可以将mask设置为全1，此时表示所有点都需要结构控制。
+结构融合
+有了指导的结构图和当前实际的结构图之后，就需要进行使用结构指导。
+
+
+如上图公式所示，分为两个部分，第一个部分是前景指导，第二个是背景指导。
+其中 mijm_{ij}mij​是Mask中的一个点的权重,
+sts_tst​ 表示t时间步Generation Branch生成的结构图
+stg{s_t}^gst​g表示Guiding Branch生成的结构图
+此处使用MSE来表示这两者的差距并且使用注意力来控制对结构的敏感度，
+后面的部分用来惩罚不要过多控制背景。
+所以上面这个公式主要是一个惩罚项，但结构与想要的不一致的时候会变大
+内容风格控制
+添加了结构控制之后可能会影响生成的风格，所以分别计算不用结构控制生成的图像和用结构控制生成的图像的外观向量：
+
+然后得到gag_aga​来控制风格和之前相似，其中带上划线的V是不带控制结构生成的图像
+
+最终的更新公式为：
+
+其中第二项是不添加文本信息的生成噪音
+在CFG中是如此定义的：
+ϵ^t=ϵθ(xt;t,∅)+s(ϵθ(xt;t,c)−ϵθ(xt;t,∅))\hat{\epsilon}_t
+=
+\epsilon_\theta(x_t; t, \varnothing)
++
+s\big(
+\epsilon_\theta(x_t; t, c)
+-
+\epsilon_\theta(x_t; t, \varnothing)
+\big)
+ϵ^t​=ϵθ​(xt​;t,∅)+s(ϵθ​(xt​;t,c)−ϵθ​(xt​;t,∅))
+其意义是加上只由语义产生的噪音部分，让文本的条件被放大，然后将这个式子化简之后就能得到（7）的前两项
+补充
+PCA详解
+VAE编码器
+VAE编码器是将一张真实图像压缩到一个连续、可加噪、可扩散的 latent 表示。
+一般来说图像直接经过duffion网络，会造成参数量极大，训练时间过大
+例子，输入图像是3 _ 512 _ 512的，经过VAE编码器之后变成4 _ 64 _ 64，空间维度降低了，但是物体结构和语义分布仍在，最终经过duffion之后，再通过VAE解码器恢复到原始图像的尺寸
+VAE生成的并不是一个固定的图像，而是为每一个通道生成一个标准差和方差，然后进行采样
+VAE的训练
+VAE是单独进行训练的，不会直接和扩散模型进行训练。和自编码器一样，VAE的输入和输出都是一幅同样的图像。
+loss函数
+LVAE=∥x−x^∥⏟重建损失+β⋅KL ⁣(q(z∣x) ∥ N(0,I))⏟正则项\mathcal{L}_{\text{VAE}}
+=
+\underbrace{\|x - \hat{x}\|}_{\text{重建损失}}
++
+\beta \cdot
+\underbrace{
+\mathrm{KL}\!\left(q(z \mid x)\,\|\,\mathcal{N}(0, I)\right)
+}_{\text{正则项}}
+LVAE​=重建损失∥x−x^∥​​+β⋅正则项KL(q(z∣x)∥N(0,I))​​
+其中xxx ：原始图像（像素空间）
+x^\hat{x}x^ ：重建后的输出
+∣x−x^∣|x - \hat{x}|∣x−x^∣ ：重建损失（Reconstruction Loss）
+zzz ：潜在变量（Latent Variable）
+q(z∣x)q(z \mid x)q(z∣x) ： 编码器给出的后验分布
+N(0,I)\mathcal{N}(0, I)N(0,I) ：潜在空间的先验分布
+KL(q(z∣x),∣,N(0,I))\mathrm{KL}\left(q(z \mid x),|,\mathcal{N}(0, I)\right)KL(q(z∣x),∣,N(0,I))：KL 散度正则项
+β\betaβ ：KL 权重系数（正则强度）
+正则项的加入是为了将潜在空间的分布拉向标准正态分布，这样解码器就能从一个近似标准正态分布分布的数据中恢复原始的图像。
+]]></content>
+      <tags>
+        <tag>扩散模型</tag>
       </tags>
   </entry>
   <entry>
@@ -703,45 +854,6 @@ Sigmoid（平滑过渡）
       </tags>
   </entry>
   <entry>
-    <title>SAR图像像素点转化为经纬度</title>
-    <url>/2025/11/24/SAR%E5%9B%BE%E5%83%8F%E5%83%8F%E7%B4%A0%E7%82%B9%E8%BD%AC%E5%8C%96%E4%B8%BA%E7%BB%8F%E7%BA%AC%E5%BA%A6/</url>
-    <content><![CDATA[SAR 图像像素点转化经纬度
-有的 tiff 格式的 SAR 图像其可能存在 CRS 和转化矩阵，可以使用这两个参数将 SAR 图像中的像素点转化为实际的经纬度。
-CRS 地理坐标是用来表示地球上的具体某一点的坐标系，类似于二维平面下有极坐标系和直角坐标系一样，CRS 也有很多种不同的坐标系，下面输出的 CRS 就是数据集使用的地理坐标系，但是这个不是标准的经纬度坐标，输出 CRS 信息是用来描述这个坐标系的具体参数，但是实际使用的时候并不需要全部了解这些参数的意义，直接整体使用即可。
-
-将像素点转化为经纬度有两步仿射变化：
-
-使用 transform 矩阵将像素点转化为该数据集下的 CRS 地理坐标系。
-将该数据集的坐标系转化为标准经纬度坐标系。
-
-
-第一步的 transform 矩阵是 tiff 图像种可以直接获取的，如下面所示。但是如果输出的是单位矩阵的话表示该数据集没有可使用的转化矩阵，没办法转化为 CRS 坐标。
-import rasterio# 打开 TIFF 文件with rasterio.open(&#x27;../dataset/AIR-SARShip-1.0/data_spilt/images/SARShip-1.0-1_r02432_c02432.tiff&#x27;) as dataset:    # 获取仿射变换矩阵    transform = dataset.transform    print(&quot;Transform:&quot;, transform)    # 获取地理坐标参考系统（CRS）    crs = dataset.crs    print(&quot;CRS:&quot;, crs)
-Transform: | 3.00, 0.00, 398197.03|| 0.00,-3.00, 117781.13|| 0.00, 0.00, 1.00|CRS: PROJCS[&quot;Projection Name = UTMUnits = Meter&quot;,GEOGCS[&quot;WGS 84&quot;,DATUM[&quot;World Geodetic System 1984&quot;,SPHEROID[&quot;WGS 84&quot;,6378137,298.257164354493]],PRIMEM[&quot;Greenwich&quot;,0],UNIT[&quot;degree&quot;,0.0174532925199433,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,30.1750794778181],PARAMETER[&quot;central_meridian&quot;,114.404640526027],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,400000],PARAMETER[&quot;false_northing&quot;,100000],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]
-
-第一个仿射矩阵是数据集自带的，但是第二仿射矩阵需要使用 pyporj 库种的 Transformer 进行计算，如下面代码所示，获得的仿射矩阵就是从数据集中的 crs 坐标系到“EPSG:4326”的映射。EPSG:4326 是经纬度的坐标系标准。
-
-from pyproj import Transformercrs = dataset.crs  #获取数据集的CRSgeo_transformer = Transformer.from_crs(crs, &quot;EPSG:4326&quot;, always_xy=True) #获得将CRS转化为标准经纬度的坐标def pixel_to_lonlat(x_pixel, y_pixel, transform_affine, geo_transformer):    &quot;&quot;&quot;Convert pixel coordinates to lon/lat using raster transform/CRS.&quot;&quot;&quot;    if transform_affine is None:        raise ValueError(&quot;TIFF file does not contain an affine transform matrix.&quot;)    x_geo, y_geo = transform_affine * (x_pixel, y_pixel)    if geo_transformer is None:        # CRS missing; return projected coordinates as best effort.        return x_geo, y_geo    lon, lat = geo_transformer.transform(x_geo,y_geo)    return lon, lat
-验证结果
-使用公开的数据集 AIR-SARShip-1.0 进行验证，原始的图像如下所示：
-
-将获得的中心经纬度在 google 地球中进行搜索，结果如下，验证了经纬度的真实性。
-
-SAR 图像裁剪
-如上面输出的仿射矩阵：
-Transform: | 3.00, 0.00, 398197.03|		  | 0.00,-3.00, 117781.13|		  | 0.00, 0.00, 1.00           |
-对于一个坐标点（x，y），仿射转化的结果是 3 _ x +398197.03, -3 _ y+ 119981.13,其中的 398197.03 和 117781.13 相当于是偏移量，是图像左上角的 CRS 坐标。3 和-3 相当于是缩放变量，是一个像素点单位对应的 CRS 坐标的单位。
-
-所以如果要对图像进行裁剪的话，需要将偏移量进行修改，才能保证子图的仿射矩阵正确。
-
-window = Window(col, row, w, h)new_transform_matrix = rasterio.windows.transform(window, dataset.transform)
-可以通过上面的方法获得裁剪之后的仿射矩阵，其中 window 是裁剪之后的图像在原图像中的框图。
-]]></content>
-      <tags>
-        <tag>SAR图像</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>Hello world!</title>
     <url>/2025/04/30/hello-world/</url>
     <content><![CDATA[Welcome to Hexo! This is your very first post. Check documentation for more info. If you get any problems when using Hexo, you can find the answer in troubleshooting or you can ask me on GitHub.
@@ -761,116 +873,138 @@ More info: Deployment
 ]]></content>
   </entry>
   <entry>
-    <title>Freecontrol</title>
-    <url>/2026/02/15/freecontrol/</url>
-    <content><![CDATA[FreeControl
-Unet的最初输入：编码之后的文本，加完噪音且之后的图像，两者进行交叉注意力层之后送入unet中
-交叉注意力中：使用图像生成Q，文本信息生成K，V
-注：图像在加噪音之前还会经过一个VAE编码器
-结构信息发现
-论文中提到对图像的unet的中间状态进行PCA，其结果带有结构信息，所以提出了不需要为每个控制信息都额外的重新训练适配器，讲PCA得到的结构信息来控制生成图像的结构信息。
+    <title>hexo的基本使用以及问题及解决办法(持续更新)</title>
+    <url>/2025/04/25/hexo%E7%9A%84%E5%9F%BA%E6%9C%AC%E4%BD%BF%E7%94%A8/</url>
+    <content><![CDATA[基本写作操作
+创建新的文章
+hexo new [layout] &lt;title&gt;
+其中layout可以设置为post，page，draft。生成的对应的文章会生成在source文件下对应的目录中， “title” 是生成文章的名字，需要使用引号，例如：
+hexo new drafts &quot;hexo的基本使用&quot;
 
-[!NOTE]
-并不是将下面这些图像作为输入经过DDIM，得到中间层的unet然后做PCA，而是将这些当作结果图像，通过DDIM的可逆性，方向推得unet中间层然后做PCA得到的。
-
-
-Analysis Stage
-上面提到图像的结构可以使用PCA来得到，那么语义的结构应该怎么得到呢？
-Analysis Stage主要是为了计算BtB_tBt​的，BtB_tBt​ 是某个语义结构子空间（structure subspace）的基，它用来提取结构表示： $$S_{t}=B_{t}^TF_{t}$$  其中Ft是unet的特征，St是结构图
-下图计算出来的相当于是以man这个词语为核心的语义结构字体空间的基
-
-具体流程为：
-1.根据输入的特定的文本信息，通过文生图模型生成一组seed image
-2.然后将生成这些图像的unet的中间状态进行PCA计算BtB_tBt​, 因为seed image 有一组图像，所以这一组图像在同一个unet层会生成一组特征向量，需要将这些特征向量拼接起来，然后再使用PCA计算BtB_tBt​
-3.然后根据PCA的结果选取部分特征向量作为结构指导。
-Synthesis Stage
-上面的内容简要介绍了怎么从文本和控制图像中提取控制结构，那么怎么将两者进行对齐呢，Synthesis Stage的核心是将原始生成的图像的结构和控制图像的结构图进行组合，使得前者的结构不断毕竟后者的结构以实现控制结构。
-
-Synthesis Stage又分为Guiding Branch和Generation Branch两部分
-Guiding Branch
-Guiding Branch对应上图的蓝色部分
-其中，Input Condition 是输入的控制图像，是预期结果生成图像的结构。
-现在想要获得这个图像在unet中某时间步和某层的结构图，可以将这个图像看作最终的输出，然后根据一个结果图像反向获得其在unet的结构图
-正常的正向扩散模型流程是：
-输入噪点图 -&gt; VAE encoder -&gt; 和文本结合送入unet -&gt; VAE decoder -&gt; result
-第一步是反向经过VAE decoder，这个的逆过程相当于经过VAE encoder，然后再是通过DDIM inversion得到在unet中具体层具体时间步的特征向量。
-DDIM inversion
-本博客中另一篇文章DDIM于DDPM中介绍了DDIM的正向流程，其中想要获得下一步的去噪效果需要先估算干净的图像，然后再加噪音回下一个时间步。此处的结果可以相当于干净的图像，可以通过固定的加噪音到指定的时间步,公式如下所示：
-xt=αˉt x0+1−αˉt ϵ,ϵ∼N(0,I)x_t
-=
-\sqrt{\bar{\alpha}_t}\, x_0
-+
-\sqrt{1-\bar{\alpha}_t}\,\epsilon,
-\quad \epsilon \sim \mathcal N(0, I)
-xt​=αˉt​​x0​+1−αˉt​​ϵ,ϵ∼N(0,I)
-有了某一步的特征之后就能获得对应的结构指导图（Structure Guidance）
-Generation Branch
-再看上面的分支，通过输入噪音图像和文本信息，可以直接正向的结构指导图
-MASK
-初始输入的噪音图像和文本送入unet中会经过cross attention层，通过这一层可以得到一个注意力图，表示当前文本对图像中注意力主要关注的地方（经过归一化处理的），这个注意力图称为mask，其中约接近1，表示越重要，越需要结构控制，接近则表示不需要结构控制。
-注：可以将mask设置为全1，此时表示所有点都需要结构控制。
-结构融合
-有了指导的结构图和当前实际的结构图之后，就需要进行使用结构指导。
+其中post是默认的选项，post完成后如果在 hexo d 就会发布出去
+draft选项：完成之后并不会直接发布，需要使用指令转化为post
+hexo publish [layout] &lt;title&gt;
+创建完文章之后打开对应的md文件，一般有默认的模板，可以添加额外的内容，参考此文档中的Post Front-matter
+删除文章
+​	直接在本地删除即可，然后再分别输入上传即可（若要删除的文章没有上传过则省略下面步骤）参考此文
+hexo cleanhexo ghexo d 
+在本地查看结果
+hexo s
+默认的端口号是4000，如果打开的网址没有内容，可能是因为端口被占用了，可以更改默认的端口号
+hexo s -p 4001
+将默认的端口号改成4001并且运行
+或者永久更改，参考此文
+上传文章
+hexo cleanhexo ghexo d
+md文件中无法插入本地图片
+有的博客要让下插件，但是我下载之后不能正常使用，查阅之后发现直接在source文件夹下面多加一个img文件夹就可以解决本地和上传之后的图片。
+参考此篇文章的第二种方法
+示例:
 
 
-如上图公式所示，分为两个部分，第一个部分是前景指导，第二个是背景指导。
-其中 mijm_{ij}mij​是Mask中的一个点的权重,
-sts_tst​ 表示t时间步Generation Branch生成的结构图
-stg{s_t}^gst​g表示Guiding Branch生成的结构图
-此处使用MSE来表示这两者的差距并且使用注意力来控制对结构的敏感度，
-后面的部分用来惩罚不要过多控制背景。
-所以上面这个公式主要是一个惩罚项，但结构与想要的不一致的时候会变大
-内容风格控制
-添加了结构控制之后可能会影响生成的风格，所以分别计算不用结构控制生成的图像和用结构控制生成的图像的外观向量：
+补充：
+​	使用post_asset_image之后，还是不能成功渲染图片，html显示如下内容：
 
-然后得到gag_aga​来控制风格和之前相似，其中带上划线的V是不带控制结构生成的图像
+html输出为：
+但是在html文件中却是：
+然后我的img文件存放在source/img/&lt;文章名字&gt; 下面的，所以html中缺少…/来回到source文件。
+解决方法：找到blog\node_modules\hexo-asset-image\index.js 文件，将58，59行改成下列就能正常运行了：部分参考这个文章
 
-最终的更新公式为：
+hexo.butterfly导航栏的类别与标签打开显示Cannot GET /xxx/
+实测该博主的方法可以解决该问题
+部署到github时出现以下问题
 
-其中第二项是不添加文本信息的生成噪音
-在CFG中是如此定义的：
-ϵ^t=ϵθ(xt;t,∅)+s(ϵθ(xt;t,c)−ϵθ(xt;t,∅))\hat{\epsilon}_t
-=
-\epsilon_\theta(x_t; t, \varnothing)
-+
-s\big(
-\epsilon_\theta(x_t; t, c)
--
-\epsilon_\theta(x_t; t, \varnothing)
-\big)
-ϵ^t​=ϵθ​(xt​;t,∅)+s(ϵθ​(xt​;t,c)−ϵθ​(xt​;t,∅))
-其意义是加上只由语义产生的噪音部分，让文本的条件被放大，然后将这个式子化简之后就能得到（7）的前两项
-补充
-PCA详解
-VAE编码器
-VAE编码器是将一张真实图像压缩到一个连续、可加噪、可扩散的 latent 表示。
-一般来说图像直接经过duffion网络，会造成参数量极大，训练时间过大
-例子，输入图像是3 _ 512 _ 512的，经过VAE编码器之后变成4 _ 64 _ 64，空间维度降低了，但是物体结构和语义分布仍在，最终经过duffion之后，再通过VAE解码器恢复到原始图像的尺寸
-VAE生成的并不是一个固定的图像，而是为每一个通道生成一个标准差和方差，然后进行采样
-VAE的训练
-VAE是单独进行训练的，不会直接和扩散模型进行训练。和自编码器一样，VAE的输入和输出都是一幅同样的图像。
-loss函数
-LVAE=∥x−x^∥⏟重建损失+β⋅KL ⁣(q(z∣x) ∥ N(0,I))⏟正则项\mathcal{L}_{\text{VAE}}
-=
-\underbrace{\|x - \hat{x}\|}_{\text{重建损失}}
-+
-\beta \cdot
-\underbrace{
-\mathrm{KL}\!\left(q(z \mid x)\,\|\,\mathcal{N}(0, I)\right)
-}_{\text{正则项}}
-LVAE​=重建损失∥x−x^∥​​+β⋅正则项KL(q(z∣x)∥N(0,I))​​
-其中xxx ：原始图像（像素空间）
-x^\hat{x}x^ ：重建后的输出
-∣x−x^∣|x - \hat{x}|∣x−x^∣ ：重建损失（Reconstruction Loss）
-zzz ：潜在变量（Latent Variable）
-q(z∣x)q(z \mid x)q(z∣x) ： 编码器给出的后验分布
-N(0,I)\mathcal{N}(0, I)N(0,I) ：潜在空间的先验分布
-KL(q(z∣x),∣,N(0,I))\mathrm{KL}\left(q(z \mid x),|,\mathcal{N}(0, I)\right)KL(q(z∣x),∣,N(0,I))：KL 散度正则项
-β\betaβ ：KL 权重系数（正则强度）
-正则项的加入是为了将潜在空间的分布拉向标准正态分布，这样解码器就能从一个近似标准正态分布分布的数据中恢复原始的图像。
+该问题是因为将所有文件都一起部署到了仓库当中，正常情况下，只会部署public中的静态文件到仓库中。
+解决方法：
+不适用git init初始化库,如果已经使用了这个指令先使用下面两个指令进行删除
+Remove-Item -Recurse -Force .deploy_git
+下载部署插件
+npm install hexo-deployer-git --save
+然后再使用hexo d部署就能成功部署
+使用公式时出现问题，每个公式都渲染了两次
+​	我使用的是butterfly自带的katex，在主题config配置如下：
+但是 渲染到html文件的时候出现如下情况：
+
+md文件中为：
+
+​	查看html文件发现：
+
+​	其中公式被渲染了两次，分别为ketax-html和katex-mathml，具体为什么会这样还没不可得知，可能是之前配置的有问题?,在网上查阅之后也没有类似案例,只好自己解决.
+​	这里我们想使用的是katex-mathml 这个的结果,那么最简单的方式是直接将ketax-html 设置为不显示就行,只需在主题的css添加:
+.katex-html &#123;  display: none !important;&#125;
+​	就可以不显示所有的katex-html.butterfly主题的source下有css文件,其中有一个index.styl文件是用来引用静态css文件的
+
+​	其中引用了很多css文件,只要在其中一个加上上面的css代码就行,这个选_global文件夹中的index.styl中添加上面的css代码,然后重新部署就可以解决.
+​	注:不能直接在hexo目录下的public/css/index.css中添加上面的css代码,因为每次hexo clean 和hexo g会根据主题的css重新设置public/css/index,导致添加的代码被覆盖.
+笔记命名问题
+笔记的文件名字必须和title一致，不然无法发布出去。所以一开始就将两者保持一致，避免对应的图像文件夹名字也出现错误，导致需要修改的地方过多。
+下一页按钮与页数边框无法对齐
+当内容过多出现第二页之后，有以下问题，页不知道是什么造成的。
+
+解决方案如下：
+在source\css\custom.css目录下创建该css文件，然后输入以下内容：
+/* 强制统一分页按钮尺寸 */#pagination .pagination &gt; a,#pagination .pagination &gt; span &#123;  width: 42px !important;  height: 42px !important;  line-height: 42px !important;  display: inline-flex !important;  align-items: center !important;  justify-content: center !important;  box-sizing: border-box !important;&#125;/* 防止 Font Awesome 图标撑高 */#pagination .pagination .extend i &#123;  line-height: 1 !important;  font-size: 1.2em;&#125;/* 防止 hover 抖动 */#pagination .pagination &gt; a,#pagination .pagination &gt; span &#123;  border: 2px solid transparent !important;&#125;
+然后重新部署即可解决。
+如果还不能解决，在_config.butterfly.yml 中，修改以下内容字段：
+inject:  head:    - &lt;link rel=&quot;stylesheet&quot; href=&quot;/css/custom.css&quot;&gt;    # - &lt;link rel=&quot;stylesheet&quot; href=&quot;/xxx.css&quot;&gt;  bottom:    # - &lt;script src=&quot;xxxx&quot;&gt;&lt;/script&gt;
+top_iamge设置问题
+具体原因还不知道，先记录在这个地方，在文章开头的地方声明cover的时候如果是
+cover: /img/word2vec.png  这种的就会默认将封面也渲染到顶部
+但是如果是cover: /img/wod2vec.png 就不会渲染到顶部。
 ]]></content>
       <tags>
-        <tag>扩散模型</tag>
+        <tag>hexo使用</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Image-to-Image Translation with Conditional Adversarial Networks 论文</title>
+    <url>/2025/09/22/img2img/</url>
+    <content><![CDATA[Image-to-Image Translation with Conditional Adversarial Networks 论文
+​	论文原址
+1.实现的功能
+​	实现了将图片转成另外一个图片，具体使用包括：根据手稿生成画作，冬天图像转化为春天等等。
+
+2.网络模型
+
+使用有监督的GAN，通过G生成器将x转化为G(x)，然后通过D辨别器区分真实的图像和生成的图像。
+​	通俗理解GAN
+2.1 网络中的特殊点
+2.1.1 同时生成高频和低频信息
+​	低频图像主要包含整体形状，轮廓等。高频图像主要包含边缘等细节信息。
+​	模型的损失函数为：
+
+​	其中的λLL1(G)\lambda L_{L1}(G)λLL1​(G)是指通过G生成的图像和真实图像之间的差距
+
+​	这个是对整个图像进行求损失期望，理所应当的这个误差描述的是整体之间的差异，通过这个能够很	好的对低频信息进行建模。
+​	对高频信息的建模是通过PatchGAN实现的，正常的GAN其中的辨别器的输入是两个 图像，输出是	一个数值，表示辨别的结果。PatchGAN是将一个图像分为很多个小的patch，对其中的每个patch输出一	个数值，表示该patch的辨别结果。patch的输入仍然是两个图像，但是输出的是每个patch的判别结果。	将图像分成很多个patch，然后再求损失，这样的精度相比于整体一起求细节保存的是更好的，所以这个	技术能够很好的对高频信息进行建模。
+2.2模型的具体实现：
+2.2.1 生成器
+​	生成器采用的网络模型是经典的U-net：UNet
+
+​	U-Net通过将下采样时候的特征值和上采样的特征值进行结合建模，这样能够很好的保存图像的底层信息，使得生成的图像和本来的图像能够有相似的底层信息：例如根据手绘图像生成实际图像中，手绘图像的形状和实际图像的形状应该很相似。  生成器的具体代码如下：
+class UnetGenerator(nn.Module):    &quot;&quot;&quot;Create a Unet-based generator&quot;&quot;&quot;    def __init__(self, input_nc, output_nc, num_downs, ngf=64, norm_layer=nn.BatchNorm2d, use_dropout=False):        &quot;&quot;&quot;Construct a Unet generator        Parameters:            input_nc (int)  -- the number of channels in input images            output_nc (int) -- the number of channels in output images            num_downs (int) -- the number of downsamplings in UNet. For example, # if |num_downs| == 7,                                image of size 128x128 will become of size 1x1 # at the bottleneck            ngf (int)       -- the number of filters in the last conv layer            norm_layer      -- normalization layer        We construct the U-Net from the innermost layer to the outermost layer.        It is a recursive process.        &quot;&quot;&quot;        super(UnetGenerator, self).__init__()        # construct unet structure        unet_block = UnetSkipConnectionBlock(ngf * 8, ngf * 8, input_nc=None, submodule=None, norm_layer=norm_layer, innermost=True)  # add the innermost layer        for i in range(num_downs - 5):  # add intermediate layers with ngf * 8 filters            unet_block = UnetSkipConnectionBlock(ngf * 8, ngf * 8, input_nc=None, submodule=unet_block, norm_layer=norm_layer, use_dropout=use_dropout)        # gradually reduce the number of filters from ngf * 8 to ngf        unet_block = UnetSkipConnectionBlock(ngf * 4, ngf * 8, input_nc=None, submodule=unet_block, norm_layer=norm_layer)        unet_block = UnetSkipConnectionBlock(ngf * 2, ngf * 4, input_nc=None, submodule=unet_block, norm_layer=norm_layer)        unet_block = UnetSkipConnectionBlock(ngf, ngf * 2, input_nc=None, submodule=unet_block, norm_layer=norm_layer)        self.model = UnetSkipConnectionBlock(output_nc, ngf, input_nc=input_nc, submodule=unet_block, outermost=True, norm_layer=norm_layer)  # add the outermost layer    def forward(self, input):        &quot;&quot;&quot;Standard forward&quot;&quot;&quot;        return self.model(input)
+2.2.2 辨别器
+​	辨别器使用的是常规的卷积神经网络，输出的结果是每一个patch的判别结果，具体代码如下：
+class NLayerDiscriminator(nn.Module):    &quot;&quot;&quot;Defines a PatchGAN discriminator&quot;&quot;&quot;    def __init__(self, input_nc, ndf=64, n_layers=3, norm_layer=nn.BatchNorm2d):        &quot;&quot;&quot;Construct a PatchGAN discriminator        Parameters:            input_nc (int)  -- the number of channels in input images            ndf (int)       -- the number of filters in the last conv layer            n_layers (int)  -- the number of conv layers in the discriminator            norm_layer      -- normalization layer        &quot;&quot;&quot;        super(NLayerDiscriminator, self).__init__()        if type(norm_layer) == functools.partial:  # no need to use bias as BatchNorm2d has affine parameters            use_bias = norm_layer.func == nn.InstanceNorm2d        else:            use_bias = norm_layer == nn.InstanceNorm2d        kw = 4        padw = 1        sequence = [nn.Conv2d(input_nc, ndf, kernel_size=kw, stride=2, padding=padw), nn.LeakyReLU(0.2, True)]        nf_mult = 1        nf_mult_prev = 1        for n in range(1, n_layers):  # gradually increase the number of filters            nf_mult_prev = nf_mult            nf_mult = min(2**n, 8)            sequence += [nn.Conv2d(ndf * nf_mult_prev, ndf * nf_mult, kernel_size=kw, stride=2, padding=padw, bias=use_bias), norm_layer(ndf * nf_mult), nn.LeakyReLU(0.2, True)]        nf_mult_prev = nf_mult        nf_mult = min(2**n_layers, 8)        sequence += [nn.Conv2d(ndf * nf_mult_prev, ndf * nf_mult, kernel_size=kw, stride=1, padding=padw, bias=use_bias), norm_layer(ndf * nf_mult), nn.LeakyReLU(0.2, True)]        sequence += [nn.Conv2d(ndf * nf_mult, 1, kernel_size=kw, stride=1, padding=padw)]  # output 1 channel prediction map        self.model = nn.Sequential(*sequence)    def forward(self, input):        &quot;&quot;&quot;Standard forward.&quot;&quot;&quot;        return self.model(input)
+2.2.3损失函数
+def backward_D(self):    &quot;&quot;&quot;Calculate GAN loss for the discriminator&quot;&quot;&quot;    # Fake; stop backprop to the generator by detaching fake_B    fake_AB = torch.cat((self.real_A, self.fake_B), 1)  # we use conditional GANs; we need to feed both input and output to the discriminator    pred_fake = self.netD(fake_AB.detach())    self.loss_D_fake = self.criterionGAN(pred_fake, False)    # Real    real_AB = torch.cat((self.real_A, self.real_B), 1)    pred_real = self.netD(real_AB)    self.loss_D_real = self.criterionGAN(pred_real, True)    # combine loss and calculate gradients    self.loss_D = (self.loss_D_fake + self.loss_D_real) * 0.5    self.loss_D.backward()def backward_G(self):    &quot;&quot;&quot;Calculate GAN and L1 loss for the generator&quot;&quot;&quot;    # First, G(A) should fake the discriminator    fake_AB = torch.cat((self.real_A, self.fake_B), 1)    pred_fake = self.netD(fake_AB)    self.loss_G_GAN = self.criterionGAN(pred_fake, True)    # Second, G(A) = B    self.loss_G_L1 = self.criterionL1(self.fake_B, self.real_B) * self.opt.lambda_L1    # combine loss and calculate gradients    self.loss_G = self.loss_G_GAN + self.loss_G_L1    self.loss_G.backward()
+​	其中的loss_D包含两个部分，一个是输入为（真，假）的loss表示将假的误认为真的情况，一个是输入为（真，真）的loss表示将真的判别为假的情况。最后的loss为两者的平均值。 如果想要改变或者重视某一个情况的话，可以修改权重。比如有的情况下认为将假的认为是真的，这种情况是难以容忍的，所以可以将之给很高的权重a,另外一个的权重则为1-a。
+​	生成器的loss函数包含两部分，分别是生成器本身的loss。还有L1loss，表示生成的图像和真实的图像之间的区别，也是用来建模低频信息的关键。那么为什么不像判别器一样也使用（真，真），（真，假）两种情况的loss呢？ 因为生成器只关注生成的图像和真实的区别，即（真，假）的情况，并不关心判别器能否判断（真，真）的情况。从另一个角度看，就算加上（真，真）的loss，在计算梯度的时候也不会有任何影响，因为（真，真）的loss中并不包含生成器中的参数。
+3.训练结果
+3.1数据集
+​	使用facades数据集，这个数据集包含从抽象图像到真实图像的配对。
+
+3.2训练参数
+​	参数使用开源代码中默认的参数。
+3.3训练结果
+​	
+3.4测试集实际效果：
+
+4.论文中仍未解决的问题
+​	原始图像在送进生成器之前会加上随机的噪音，通过这种随机的噪音，希望对于同一个输入，输出的图像的不同的，但是在实际中这个效果并不理想，是因为之后的网络能够学习到去掉噪音。论文中尝试加入dropout，此时的dropout不仅在训练的时候使用，在测试的时候也使用随机的dropout，通过这种方式能够一定程度上生成不同的图像，但是论文中提到这个效果并没有特别理想。噪声，我们在网络的输出中只观察到较小的随机性。 所以设计能够产生高度随机输出的条件GAN，从而捕获它们所建模的条件分布的完全熵，是目前工作留下的一个重要问题。
+]]></content>
+      <tags>
+        <tag>GAN</tag>
       </tags>
   </entry>
   <entry>
@@ -1109,141 +1243,6 @@ loss=1/2[Qw​(s,a)−(r+γa′max​Qw′​(s′,a′))]
 ]]></content>
       <tags>
         <tag>强化学习</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>hexo的基本使用以及问题及解决办法(持续更新)</title>
-    <url>/2025/04/25/hexo%E7%9A%84%E5%9F%BA%E6%9C%AC%E4%BD%BF%E7%94%A8/</url>
-    <content><![CDATA[基本写作操作
-创建新的文章
-hexo new [layout] &lt;title&gt;
-其中layout可以设置为post，page，draft。生成的对应的文章会生成在source文件下对应的目录中， “title” 是生成文章的名字，需要使用引号，例如：
-hexo new drafts &quot;hexo的基本使用&quot;
-
-其中post是默认的选项，post完成后如果在 hexo d 就会发布出去
-draft选项：完成之后并不会直接发布，需要使用指令转化为post
-hexo publish [layout] &lt;title&gt;
-创建完文章之后打开对应的md文件，一般有默认的模板，可以添加额外的内容，参考此文档中的Post Front-matter
-删除文章
-​	直接在本地删除即可，然后再分别输入上传即可（若要删除的文章没有上传过则省略下面步骤）参考此文
-hexo cleanhexo ghexo d 
-在本地查看结果
-hexo s
-默认的端口号是4000，如果打开的网址没有内容，可能是因为端口被占用了，可以更改默认的端口号
-hexo s -p 4001
-将默认的端口号改成4001并且运行
-或者永久更改，参考此文
-上传文章
-hexo cleanhexo ghexo d
-md文件中无法插入本地图片
-有的博客要让下插件，但是我下载之后不能正常使用，查阅之后发现直接在source文件夹下面多加一个img文件夹就可以解决本地和上传之后的图片。
-参考此篇文章的第二种方法
-示例:
-
-
-补充：
-​	使用post_asset_image之后，还是不能成功渲染图片，html显示如下内容：
-
-html输出为：
-但是在html文件中却是：
-然后我的img文件存放在source/img/&lt;文章名字&gt; 下面的，所以html中缺少…/来回到source文件。
-解决方法：找到blog\node_modules\hexo-asset-image\index.js 文件，将58，59行改成下列就能正常运行了：部分参考这个文章
-
-hexo.butterfly导航栏的类别与标签打开显示Cannot GET /xxx/
-实测该博主的方法可以解决该问题
-部署到github时出现以下问题
-
-该问题是因为将所有文件都一起部署到了仓库当中，正常情况下，只会部署public中的静态文件到仓库中。
-解决方法：
-不适用git init初始化库,如果已经使用了这个指令先使用下面两个指令进行删除
-Remove-Item -Recurse -Force .deploy_git
-下载部署插件
-npm install hexo-deployer-git --save
-然后再使用hexo d部署就能成功部署
-使用公式时出现问题，每个公式都渲染了两次
-​	我使用的是butterfly自带的katex，在主题config配置如下：
-但是 渲染到html文件的时候出现如下情况：
-
-md文件中为：
-
-​	查看html文件发现：
-
-​	其中公式被渲染了两次，分别为ketax-html和katex-mathml，具体为什么会这样还没不可得知，可能是之前配置的有问题?,在网上查阅之后也没有类似案例,只好自己解决.
-​	这里我们想使用的是katex-mathml 这个的结果,那么最简单的方式是直接将ketax-html 设置为不显示就行,只需在主题的css添加:
-.katex-html &#123;  display: none !important;&#125;
-​	就可以不显示所有的katex-html.butterfly主题的source下有css文件,其中有一个index.styl文件是用来引用静态css文件的
-
-​	其中引用了很多css文件,只要在其中一个加上上面的css代码就行,这个选_global文件夹中的index.styl中添加上面的css代码,然后重新部署就可以解决.
-​	注:不能直接在hexo目录下的public/css/index.css中添加上面的css代码,因为每次hexo clean 和hexo g会根据主题的css重新设置public/css/index,导致添加的代码被覆盖.
-笔记命名问题
-笔记的文件名字必须和title一致，不然无法发布出去。所以一开始就将两者保持一致，避免对应的图像文件夹名字也出现错误，导致需要修改的地方过多。
-下一页按钮与页数边框无法对齐
-当内容过多出现第二页之后，有以下问题，页不知道是什么造成的。
-
-解决方案如下：
-在source\css\custom.css目录下创建该css文件，然后输入以下内容：
-/* 强制统一分页按钮尺寸 */#pagination .pagination &gt; a,#pagination .pagination &gt; span &#123;  width: 42px !important;  height: 42px !important;  line-height: 42px !important;  display: inline-flex !important;  align-items: center !important;  justify-content: center !important;  box-sizing: border-box !important;&#125;/* 防止 Font Awesome 图标撑高 */#pagination .pagination .extend i &#123;  line-height: 1 !important;  font-size: 1.2em;&#125;/* 防止 hover 抖动 */#pagination .pagination &gt; a,#pagination .pagination &gt; span &#123;  border: 2px solid transparent !important;&#125;
-然后重新部署即可解决。
-如果还不能解决，在_config.butterfly.yml 中，修改以下内容字段：
-inject:  head:    - &lt;link rel=&quot;stylesheet&quot; href=&quot;/css/custom.css&quot;&gt;    # - &lt;link rel=&quot;stylesheet&quot; href=&quot;/xxx.css&quot;&gt;  bottom:    # - &lt;script src=&quot;xxxx&quot;&gt;&lt;/script&gt;
-top_iamge设置问题
-具体原因还不知道，先记录在这个地方，在文章开头的地方声明cover的时候如果是
-cover: /img/word2vec.png  这种的就会默认将封面也渲染到顶部
-但是如果是cover: /img/wod2vec.png 就不会渲染到顶部。
-]]></content>
-      <tags>
-        <tag>hexo使用</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Image-to-Image Translation with Conditional Adversarial Networks 论文</title>
-    <url>/2025/09/22/img2img/</url>
-    <content><![CDATA[Image-to-Image Translation with Conditional Adversarial Networks 论文
-​	论文原址
-1.实现的功能
-​	实现了将图片转成另外一个图片，具体使用包括：根据手稿生成画作，冬天图像转化为春天等等。
-
-2.网络模型
-
-使用有监督的GAN，通过G生成器将x转化为G(x)，然后通过D辨别器区分真实的图像和生成的图像。
-​	通俗理解GAN
-2.1 网络中的特殊点
-2.1.1 同时生成高频和低频信息
-​	低频图像主要包含整体形状，轮廓等。高频图像主要包含边缘等细节信息。
-​	模型的损失函数为：
-
-​	其中的λLL1(G)\lambda L_{L1}(G)λLL1​(G)是指通过G生成的图像和真实图像之间的差距
-
-​	这个是对整个图像进行求损失期望，理所应当的这个误差描述的是整体之间的差异，通过这个能够很	好的对低频信息进行建模。
-​	对高频信息的建模是通过PatchGAN实现的，正常的GAN其中的辨别器的输入是两个 图像，输出是	一个数值，表示辨别的结果。PatchGAN是将一个图像分为很多个小的patch，对其中的每个patch输出一	个数值，表示该patch的辨别结果。patch的输入仍然是两个图像，但是输出的是每个patch的判别结果。	将图像分成很多个patch，然后再求损失，这样的精度相比于整体一起求细节保存的是更好的，所以这个	技术能够很好的对高频信息进行建模。
-2.2模型的具体实现：
-2.2.1 生成器
-​	生成器采用的网络模型是经典的U-net：UNet
-
-​	U-Net通过将下采样时候的特征值和上采样的特征值进行结合建模，这样能够很好的保存图像的底层信息，使得生成的图像和本来的图像能够有相似的底层信息：例如根据手绘图像生成实际图像中，手绘图像的形状和实际图像的形状应该很相似。  生成器的具体代码如下：
-class UnetGenerator(nn.Module):    &quot;&quot;&quot;Create a Unet-based generator&quot;&quot;&quot;    def __init__(self, input_nc, output_nc, num_downs, ngf=64, norm_layer=nn.BatchNorm2d, use_dropout=False):        &quot;&quot;&quot;Construct a Unet generator        Parameters:            input_nc (int)  -- the number of channels in input images            output_nc (int) -- the number of channels in output images            num_downs (int) -- the number of downsamplings in UNet. For example, # if |num_downs| == 7,                                image of size 128x128 will become of size 1x1 # at the bottleneck            ngf (int)       -- the number of filters in the last conv layer            norm_layer      -- normalization layer        We construct the U-Net from the innermost layer to the outermost layer.        It is a recursive process.        &quot;&quot;&quot;        super(UnetGenerator, self).__init__()        # construct unet structure        unet_block = UnetSkipConnectionBlock(ngf * 8, ngf * 8, input_nc=None, submodule=None, norm_layer=norm_layer, innermost=True)  # add the innermost layer        for i in range(num_downs - 5):  # add intermediate layers with ngf * 8 filters            unet_block = UnetSkipConnectionBlock(ngf * 8, ngf * 8, input_nc=None, submodule=unet_block, norm_layer=norm_layer, use_dropout=use_dropout)        # gradually reduce the number of filters from ngf * 8 to ngf        unet_block = UnetSkipConnectionBlock(ngf * 4, ngf * 8, input_nc=None, submodule=unet_block, norm_layer=norm_layer)        unet_block = UnetSkipConnectionBlock(ngf * 2, ngf * 4, input_nc=None, submodule=unet_block, norm_layer=norm_layer)        unet_block = UnetSkipConnectionBlock(ngf, ngf * 2, input_nc=None, submodule=unet_block, norm_layer=norm_layer)        self.model = UnetSkipConnectionBlock(output_nc, ngf, input_nc=input_nc, submodule=unet_block, outermost=True, norm_layer=norm_layer)  # add the outermost layer    def forward(self, input):        &quot;&quot;&quot;Standard forward&quot;&quot;&quot;        return self.model(input)
-2.2.2 辨别器
-​	辨别器使用的是常规的卷积神经网络，输出的结果是每一个patch的判别结果，具体代码如下：
-class NLayerDiscriminator(nn.Module):    &quot;&quot;&quot;Defines a PatchGAN discriminator&quot;&quot;&quot;    def __init__(self, input_nc, ndf=64, n_layers=3, norm_layer=nn.BatchNorm2d):        &quot;&quot;&quot;Construct a PatchGAN discriminator        Parameters:            input_nc (int)  -- the number of channels in input images            ndf (int)       -- the number of filters in the last conv layer            n_layers (int)  -- the number of conv layers in the discriminator            norm_layer      -- normalization layer        &quot;&quot;&quot;        super(NLayerDiscriminator, self).__init__()        if type(norm_layer) == functools.partial:  # no need to use bias as BatchNorm2d has affine parameters            use_bias = norm_layer.func == nn.InstanceNorm2d        else:            use_bias = norm_layer == nn.InstanceNorm2d        kw = 4        padw = 1        sequence = [nn.Conv2d(input_nc, ndf, kernel_size=kw, stride=2, padding=padw), nn.LeakyReLU(0.2, True)]        nf_mult = 1        nf_mult_prev = 1        for n in range(1, n_layers):  # gradually increase the number of filters            nf_mult_prev = nf_mult            nf_mult = min(2**n, 8)            sequence += [nn.Conv2d(ndf * nf_mult_prev, ndf * nf_mult, kernel_size=kw, stride=2, padding=padw, bias=use_bias), norm_layer(ndf * nf_mult), nn.LeakyReLU(0.2, True)]        nf_mult_prev = nf_mult        nf_mult = min(2**n_layers, 8)        sequence += [nn.Conv2d(ndf * nf_mult_prev, ndf * nf_mult, kernel_size=kw, stride=1, padding=padw, bias=use_bias), norm_layer(ndf * nf_mult), nn.LeakyReLU(0.2, True)]        sequence += [nn.Conv2d(ndf * nf_mult, 1, kernel_size=kw, stride=1, padding=padw)]  # output 1 channel prediction map        self.model = nn.Sequential(*sequence)    def forward(self, input):        &quot;&quot;&quot;Standard forward.&quot;&quot;&quot;        return self.model(input)
-2.2.3损失函数
-def backward_D(self):    &quot;&quot;&quot;Calculate GAN loss for the discriminator&quot;&quot;&quot;    # Fake; stop backprop to the generator by detaching fake_B    fake_AB = torch.cat((self.real_A, self.fake_B), 1)  # we use conditional GANs; we need to feed both input and output to the discriminator    pred_fake = self.netD(fake_AB.detach())    self.loss_D_fake = self.criterionGAN(pred_fake, False)    # Real    real_AB = torch.cat((self.real_A, self.real_B), 1)    pred_real = self.netD(real_AB)    self.loss_D_real = self.criterionGAN(pred_real, True)    # combine loss and calculate gradients    self.loss_D = (self.loss_D_fake + self.loss_D_real) * 0.5    self.loss_D.backward()def backward_G(self):    &quot;&quot;&quot;Calculate GAN and L1 loss for the generator&quot;&quot;&quot;    # First, G(A) should fake the discriminator    fake_AB = torch.cat((self.real_A, self.fake_B), 1)    pred_fake = self.netD(fake_AB)    self.loss_G_GAN = self.criterionGAN(pred_fake, True)    # Second, G(A) = B    self.loss_G_L1 = self.criterionL1(self.fake_B, self.real_B) * self.opt.lambda_L1    # combine loss and calculate gradients    self.loss_G = self.loss_G_GAN + self.loss_G_L1    self.loss_G.backward()
-​	其中的loss_D包含两个部分，一个是输入为（真，假）的loss表示将假的误认为真的情况，一个是输入为（真，真）的loss表示将真的判别为假的情况。最后的loss为两者的平均值。 如果想要改变或者重视某一个情况的话，可以修改权重。比如有的情况下认为将假的认为是真的，这种情况是难以容忍的，所以可以将之给很高的权重a,另外一个的权重则为1-a。
-​	生成器的loss函数包含两部分，分别是生成器本身的loss。还有L1loss，表示生成的图像和真实的图像之间的区别，也是用来建模低频信息的关键。那么为什么不像判别器一样也使用（真，真），（真，假）两种情况的loss呢？ 因为生成器只关注生成的图像和真实的区别，即（真，假）的情况，并不关心判别器能否判断（真，真）的情况。从另一个角度看，就算加上（真，真）的loss，在计算梯度的时候也不会有任何影响，因为（真，真）的loss中并不包含生成器中的参数。
-3.训练结果
-3.1数据集
-​	使用facades数据集，这个数据集包含从抽象图像到真实图像的配对。
-
-3.2训练参数
-​	参数使用开源代码中默认的参数。
-3.3训练结果
-​	
-3.4测试集实际效果：
-
-4.论文中仍未解决的问题
-​	原始图像在送进生成器之前会加上随机的噪音，通过这种随机的噪音，希望对于同一个输入，输出的图像的不同的，但是在实际中这个效果并不理想，是因为之后的网络能够学习到去掉噪音。论文中尝试加入dropout，此时的dropout不仅在训练的时候使用，在测试的时候也使用随机的dropout，通过这种方式能够一定程度上生成不同的图像，但是论文中提到这个效果并没有特别理想。噪声，我们在网络的输出中只观察到较小的随机性。 所以设计能够产生高度随机输出的条件GAN，从而捕获它们所建模的条件分布的完全熵，是目前工作留下的一个重要问题。
-]]></content>
-      <tags>
-        <tag>GAN</tag>
       </tags>
   </entry>
 </search>
