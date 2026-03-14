@@ -402,157 +402,6 @@ ROC曲线有个很好的特性：当测试集中的正负样本的分布变化�
       </tags>
   </entry>
   <entry>
-    <title>SAR图像像素点转化为经纬度</title>
-    <url>/2025/11/24/SAR%E5%9B%BE%E5%83%8F%E5%83%8F%E7%B4%A0%E7%82%B9%E8%BD%AC%E5%8C%96%E4%B8%BA%E7%BB%8F%E7%BA%AC%E5%BA%A6/</url>
-    <content><![CDATA[SAR 图像像素点转化经纬度
-有的 tiff 格式的 SAR 图像其可能存在 CRS 和转化矩阵，可以使用这两个参数将 SAR 图像中的像素点转化为实际的经纬度。
-CRS 地理坐标是用来表示地球上的具体某一点的坐标系，类似于二维平面下有极坐标系和直角坐标系一样，CRS 也有很多种不同的坐标系，下面输出的 CRS 就是数据集使用的地理坐标系，但是这个不是标准的经纬度坐标，输出 CRS 信息是用来描述这个坐标系的具体参数，但是实际使用的时候并不需要全部了解这些参数的意义，直接整体使用即可。
-
-将像素点转化为经纬度有两步仿射变化：
-
-使用 transform 矩阵将像素点转化为该数据集下的 CRS 地理坐标系。
-将该数据集的坐标系转化为标准经纬度坐标系。
-
-
-第一步的 transform 矩阵是 tiff 图像种可以直接获取的，如下面所示。但是如果输出的是单位矩阵的话表示该数据集没有可使用的转化矩阵，没办法转化为 CRS 坐标。
-import rasterio# 打开 TIFF 文件with rasterio.open(&#x27;../dataset/AIR-SARShip-1.0/data_spilt/images/SARShip-1.0-1_r02432_c02432.tiff&#x27;) as dataset:    # 获取仿射变换矩阵    transform = dataset.transform    print(&quot;Transform:&quot;, transform)    # 获取地理坐标参考系统（CRS）    crs = dataset.crs    print(&quot;CRS:&quot;, crs)
-Transform: | 3.00, 0.00, 398197.03|| 0.00,-3.00, 117781.13|| 0.00, 0.00, 1.00|CRS: PROJCS[&quot;Projection Name = UTMUnits = Meter&quot;,GEOGCS[&quot;WGS 84&quot;,DATUM[&quot;World Geodetic System 1984&quot;,SPHEROID[&quot;WGS 84&quot;,6378137,298.257164354493]],PRIMEM[&quot;Greenwich&quot;,0],UNIT[&quot;degree&quot;,0.0174532925199433,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,30.1750794778181],PARAMETER[&quot;central_meridian&quot;,114.404640526027],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,400000],PARAMETER[&quot;false_northing&quot;,100000],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]
-
-第一个仿射矩阵是数据集自带的，但是第二仿射矩阵需要使用 pyporj 库种的 Transformer 进行计算，如下面代码所示，获得的仿射矩阵就是从数据集中的 crs 坐标系到“EPSG:4326”的映射。EPSG:4326 是经纬度的坐标系标准。
-
-from pyproj import Transformercrs = dataset.crs  #获取数据集的CRSgeo_transformer = Transformer.from_crs(crs, &quot;EPSG:4326&quot;, always_xy=True) #获得将CRS转化为标准经纬度的坐标def pixel_to_lonlat(x_pixel, y_pixel, transform_affine, geo_transformer):    &quot;&quot;&quot;Convert pixel coordinates to lon/lat using raster transform/CRS.&quot;&quot;&quot;    if transform_affine is None:        raise ValueError(&quot;TIFF file does not contain an affine transform matrix.&quot;)    x_geo, y_geo = transform_affine * (x_pixel, y_pixel)    if geo_transformer is None:        # CRS missing; return projected coordinates as best effort.        return x_geo, y_geo    lon, lat = geo_transformer.transform(x_geo,y_geo)    return lon, lat
-验证结果
-使用公开的数据集 AIR-SARShip-1.0 进行验证，原始的图像如下所示：
-
-将获得的中心经纬度在 google 地球中进行搜索，结果如下，验证了经纬度的真实性。
-
-SAR 图像裁剪
-如上面输出的仿射矩阵：
-Transform: | 3.00, 0.00, 398197.03|		  | 0.00,-3.00, 117781.13|		  | 0.00, 0.00, 1.00           |
-对于一个坐标点（x，y），仿射转化的结果是 3 _ x +398197.03, -3 _ y+ 119981.13,其中的 398197.03 和 117781.13 相当于是偏移量，是图像左上角的 CRS 坐标。3 和-3 相当于是缩放变量，是一个像素点单位对应的 CRS 坐标的单位。
-
-所以如果要对图像进行裁剪的话，需要将偏移量进行修改，才能保证子图的仿射矩阵正确。
-
-window = Window(col, row, w, h)new_transform_matrix = rasterio.windows.transform(window, dataset.transform)
-可以通过上面的方法获得裁剪之后的仿射矩阵，其中 window 是裁剪之后的图像在原图像中的框图。
-]]></content>
-      <tags>
-        <tag>SAR图像</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Freecontrol</title>
-    <url>/2026/02/15/freecontrol/</url>
-    <content><![CDATA[FreeControl
-Unet的最初输入：编码之后的文本，加完噪音且之后的图像，两者进行交叉注意力层之后送入unet中
-注：图像在加噪音之前还会经过一个VAE编码器
-结构信息发现
-论文中提到对图像的unet的中间状态进行PCA，其结果带有结构信息，所以提出了不需要为每个控制信息都额外的重新训练适配器，讲PCA得到的结构信息来控制生成图像的结构信息。
-
-[!NOTE]
-并不是将下面这些图像作为输入经过DDIM，得到中间层的unet然后做PCA，而是将这些当作结果图像，通过DDIM的可逆性，方向推得unet中间层然后做PCA得到的。
-
-
-Analysis Stage
-上面提到图像的结构可以使用PCA来得到，那么语义的结构应该怎么得到呢？
-Analysis Stage主要是为了计算BtB_tBt​的，BtB_tBt​ 是某个语义结构子空间（structure subspace）的基，它用来提取结构表示： St=BtTFtS_{t}=B_{t}^TF_{t}St​=BtT​Ft​ 其中Ft是unet的特征，St是结构图
-下图计算出来的相当于是以man这个词语为核心的语义结构字体空间的基
-
-具体流程为：
-1.根据输入的特定的文本信息，通过文生图模型生成一组seed image
-2.然后将生成这些图像的unet的中间状态进行PCA计算BtB_tBt​, 因为seed image 有一组图像，所以这一组图像在同一个unet层会生成一组特征向量，需要将这些特征向量拼接起来，然后再使用PCA计算BtB_tBt​
-3.然后根据PCA的结果选取部分特征向量作为结构指导。
-Synthesis Stage
-上面的内容简要介绍了怎么从文本和控制图像中提取控制结构，那么怎么将两者进行对齐呢，Synthesis Stage的核心是将原始生成的图像的结构和控制图像的结构图进行组合，使得前者的结构不断毕竟后者的结构以实现控制结构。
-
-Synthesis Stage又分为Guiding Branch和Generation Branch两部分
-Guiding Branch
-Guiding Branch对应上图的蓝色部分
-其中，Input Condition 是输入的控制图像，是预期结果生成图像的结构。
-现在想要获得这个图像在unet中某时间步和某层的结构图，可以将这个图像看作最终的输出，然后根据一个结果图像反向获得其在unet的结构图
-正常的正向扩散模型流程是：
-输入噪点图 -&gt; VAE encoder -&gt; 和文本结合送入unet -&gt; VAE decoder -&gt; result
-第一步是反向经过VAE decoder，这个的逆过程相当于经过VAE encoder，然后再是通过DDIM inversion得到在unet中具体层具体时间步的特征向量。
-DDIM inversion
-本博客中另一篇文章DDIM于DDPM中介绍了DDIM的正向流程，其中想要获得下一步的去噪效果需要先估算干净的图像，然后再加噪音回下一个时间步。此处的结果可以相当于干净的图像，可以通过固定的加噪音到指定的时间步,公式如下所示：
-xt=αˉt x0+1−αˉt ϵ,ϵ∼N(0,I)x_t
-=
-\sqrt{\bar{\alpha}_t}\, x_0
-+
-\sqrt{1-\bar{\alpha}_t}\,\epsilon,
-\quad \epsilon \sim \mathcal N(0, I)
-xt​=αˉt​​x0​+1−αˉt​​ϵ,ϵ∼N(0,I)
-有了某一步的特征之后就能获得对应的结构指导图（Structure Guidance）
-Generation Branch
-再看上面的分支，通过输入噪音图像和文本信息，可以直接正向的结构指导图
-MASK
-初始输入的噪音图像和文本送入unet中会经过cross attention层，通过这一层可以得到一个注意力图，表示当前文本对图像中注意力主要关注的地方（经过归一化处理的），这个注意力图称为mask，其中约接近1，表示越重要，越需要结构控制，接近则表示不需要结构控制。
-注：可以将mask设置为全1，此时表示所有点都需要结构控制。
-结构融合
-有了指导的结构图和当前实际的结构图之后，就需要进行使用结构指导。
-
-
-如上图公式所示，分为两个部分，第一个部分是前景指导，第二个是背景指导。
-其中 mijm_{ij}mij​是Mask中的一个点的权重,
-sts_tst​ 表示t时间步Generation Branch生成的结构图
-stg{s_t}^gst​g表示Guiding Branch生成的结构图
-此处使用MSE来表示这两者的差距并且使用注意力来控制对结构的敏感度，
-后面的部分用来惩罚不要过多控制背景。
-所以上面这个公式主要是一个惩罚项，但结构与想要的不一致的时候会变大
-内容风格控制
-添加了结构控制之后可能会影响生成的风格，所以分别计算不用结构控制生成的图像和用结构控制生成的图像的外观向量：
-
-然后得到gag_aga​来控制风格和之前相似，其中带上划线的V是不带控制结构生成的图像
-
-最终的更新公式为：
-
-其中第二项是不添加文本信息的生成噪音
-在CFG中是如此定义的：
-ϵ^t=ϵθ(xt;t,∅)+s(ϵθ(xt;t,c)−ϵθ(xt;t,∅))\hat{\epsilon}_t
-=
-\epsilon_\theta(x_t; t, \varnothing)
-+
-s\big(
-\epsilon_\theta(x_t; t, c)
--
-\epsilon_\theta(x_t; t, \varnothing)
-\big)
-ϵ^t​=ϵθ​(xt​;t,∅)+s(ϵθ​(xt​;t,c)−ϵθ​(xt​;t,∅))
-其意义是加上只由语义产生的噪音部分，让文本的条件被放大，然后将这个式子化简之后就能得到（7）的前两项
-补充
-PCA详解
-VAE编码器
-VAE编码器是将一张真实图像压缩到一个连续、可加噪、可扩散的 latent 表示。
-一般来说图像直接经过duffion网络，会造成参数量极大，训练时间过大
-例子，输入图像是3 _ 512 _ 512的，经过VAE编码器之后变成4 _ 64 _ 64，空间维度降低了，但是物体结构和语义分布仍在，最终经过duffion之后，再通过VAE解码器恢复到原始图像的尺寸
-VAE生成的并不是一个固定的图像，而是为每一个通道生成一个标准差和方差，然后进行采样
-VAE的训练
-VAE是单独进行训练的，不会直接和扩散模型进行训练。和自编码器一样，VAE的输入和输出都是一幅同样的图像。
-loss函数
-LVAE=∥x−x^∥⏟重建损失+β⋅KL ⁣(q(z∣x) ∥ N(0,I))⏟正则项\mathcal{L}_{\text{VAE}}
-=
-\underbrace{\|x - \hat{x}\|}_{\text{重建损失}}
-+
-\beta \cdot
-\underbrace{
-\mathrm{KL}\!\left(q(z \mid x)\,\|\,\mathcal{N}(0, I)\right)
-}_{\text{正则项}}
-LVAE​=重建损失∥x−x^∥​​+β⋅正则项KL(q(z∣x)∥N(0,I))​​
-其中xxx ：原始图像（像素空间）
-x^\hat{x}x^ ：重建后的输出
-∣x−x^∣|x - \hat{x}|∣x−x^∣ ：重建损失（Reconstruction Loss）
-zzz ：潜在变量（Latent Variable）
-q(z∣x)q(z \mid x)q(z∣x) ： 编码器给出的后验分布
-N(0,I)\mathcal{N}(0, I)N(0,I) ：潜在空间的先验分布
-KL(q(z∣x),∣,N(0,I))\mathrm{KL}\left(q(z \mid x),|,\mathcal{N}(0, I)\right)KL(q(z∣x),∣,N(0,I))：KL 散度正则项
-β\betaβ ：KL 权重系数（正则强度）
-正则项的加入是为了将潜在空间的分布拉向标准正态分布，这样解码器就能从一个近似标准正态分布分布的数据中恢复原始的图像。
-]]></content>
-      <tags>
-        <tag>扩散模型</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>DDPM与DDIM</title>
     <url>/2026/01/29/duffsion/</url>
     <content><![CDATA[这篇文章主要记录DDPM和DDIM中的部分公式的推导，以及两者的简要对比。
@@ -854,6 +703,186 @@ Sigmoid（平滑过渡）
       </tags>
   </entry>
   <entry>
+    <title>SAR图像像素点转化为经纬度</title>
+    <url>/2025/11/24/SAR%E5%9B%BE%E5%83%8F%E5%83%8F%E7%B4%A0%E7%82%B9%E8%BD%AC%E5%8C%96%E4%B8%BA%E7%BB%8F%E7%BA%AC%E5%BA%A6/</url>
+    <content><![CDATA[SAR 图像像素点转化经纬度
+有的 tiff 格式的 SAR 图像其可能存在 CRS 和转化矩阵，可以使用这两个参数将 SAR 图像中的像素点转化为实际的经纬度。
+CRS 地理坐标是用来表示地球上的具体某一点的坐标系，类似于二维平面下有极坐标系和直角坐标系一样，CRS 也有很多种不同的坐标系，下面输出的 CRS 就是数据集使用的地理坐标系，但是这个不是标准的经纬度坐标，输出 CRS 信息是用来描述这个坐标系的具体参数，但是实际使用的时候并不需要全部了解这些参数的意义，直接整体使用即可。
+
+将像素点转化为经纬度有两步仿射变化：
+
+使用 transform 矩阵将像素点转化为该数据集下的 CRS 地理坐标系。
+将该数据集的坐标系转化为标准经纬度坐标系。
+
+
+第一步的 transform 矩阵是 tiff 图像种可以直接获取的，如下面所示。但是如果输出的是单位矩阵的话表示该数据集没有可使用的转化矩阵，没办法转化为 CRS 坐标。
+import rasterio# 打开 TIFF 文件with rasterio.open(&#x27;../dataset/AIR-SARShip-1.0/data_spilt/images/SARShip-1.0-1_r02432_c02432.tiff&#x27;) as dataset:    # 获取仿射变换矩阵    transform = dataset.transform    print(&quot;Transform:&quot;, transform)    # 获取地理坐标参考系统（CRS）    crs = dataset.crs    print(&quot;CRS:&quot;, crs)
+Transform: | 3.00, 0.00, 398197.03|| 0.00,-3.00, 117781.13|| 0.00, 0.00, 1.00|CRS: PROJCS[&quot;Projection Name = UTMUnits = Meter&quot;,GEOGCS[&quot;WGS 84&quot;,DATUM[&quot;World Geodetic System 1984&quot;,SPHEROID[&quot;WGS 84&quot;,6378137,298.257164354493]],PRIMEM[&quot;Greenwich&quot;,0],UNIT[&quot;degree&quot;,0.0174532925199433,AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,30.1750794778181],PARAMETER[&quot;central_meridian&quot;,114.404640526027],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,400000],PARAMETER[&quot;false_northing&quot;,100000],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],AXIS[&quot;Easting&quot;,EAST],AXIS[&quot;Northing&quot;,NORTH]]
+
+第一个仿射矩阵是数据集自带的，但是第二仿射矩阵需要使用 pyporj 库种的 Transformer 进行计算，如下面代码所示，获得的仿射矩阵就是从数据集中的 crs 坐标系到“EPSG:4326”的映射。EPSG:4326 是经纬度的坐标系标准。
+
+from pyproj import Transformercrs = dataset.crs  #获取数据集的CRSgeo_transformer = Transformer.from_crs(crs, &quot;EPSG:4326&quot;, always_xy=True) #获得将CRS转化为标准经纬度的坐标def pixel_to_lonlat(x_pixel, y_pixel, transform_affine, geo_transformer):    &quot;&quot;&quot;Convert pixel coordinates to lon/lat using raster transform/CRS.&quot;&quot;&quot;    if transform_affine is None:        raise ValueError(&quot;TIFF file does not contain an affine transform matrix.&quot;)    x_geo, y_geo = transform_affine * (x_pixel, y_pixel)    if geo_transformer is None:        # CRS missing; return projected coordinates as best effort.        return x_geo, y_geo    lon, lat = geo_transformer.transform(x_geo,y_geo)    return lon, lat
+验证结果
+使用公开的数据集 AIR-SARShip-1.0 进行验证，原始的图像如下所示：
+
+将获得的中心经纬度在 google 地球中进行搜索，结果如下，验证了经纬度的真实性。
+
+SAR 图像裁剪
+如上面输出的仿射矩阵：
+Transform: | 3.00, 0.00, 398197.03|		  | 0.00,-3.00, 117781.13|		  | 0.00, 0.00, 1.00           |
+对于一个坐标点（x，y），仿射转化的结果是 3 _ x +398197.03, -3 _ y+ 119981.13,其中的 398197.03 和 117781.13 相当于是偏移量，是图像左上角的 CRS 坐标。3 和-3 相当于是缩放变量，是一个像素点单位对应的 CRS 坐标的单位。
+
+所以如果要对图像进行裁剪的话，需要将偏移量进行修改，才能保证子图的仿射矩阵正确。
+
+window = Window(col, row, w, h)new_transform_matrix = rasterio.windows.transform(window, dataset.transform)
+可以通过上面的方法获得裁剪之后的仿射矩阵，其中 window 是裁剪之后的图像在原图像中的框图。
+]]></content>
+      <tags>
+        <tag>SAR图像</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>google使用ublacklist失效</title>
+    <url>/2026/03/14/google%E4%BD%BF%E7%94%A8ublacklist%E5%A4%B1%E6%95%88/</url>
+    <content><![CDATA[google使用ublacklist失效
+解决方案
+首先怎么解决。将google浏览器的默认网址格式改为：
+https://www.google.com/search?q=%s
+然后应该就可以继续正常使用。
+问题描述
+ublacklist插件能够屏蔽一些令人厌恶的网站，比如csdn。但是之前配置使用的ublacklist突然失效，无法屏蔽结果，找了很久都没办法解决这个问题，后面改用了一个google搜索引擎模板：
+https://www.google.com/search?q=%s                 +-site:csdn.net
+这样对csdn进行屏蔽，后续能够正常使用，但是每次搜索的结果后面都会多一个-site:csdn.net，很不优雅，使用了一段时间之后发现修改了搜索引擎模板之后，好像ublacklist又可以使用了？
+问题分析
+在google-&gt;设置-&gt;搜索引擎里面查看默认的google搜索引擎的网址格式如下：
+&#123;google:baseURL&#125;search?q=%s&amp;&#123;google:RLZ&#125;&#123;google:originalQueryForSuggestion&#125;&#123;google:assistedQueryStats&#125;&#123;google:searchFieldtrialParameter&#125;&#123;google:language&#125;&#123;google:prefetchSource&#125;&#123;google:searchClient&#125;&#123;google:sourceId&#125;&#123;google:contextualSearchVersion&#125;ie=&#123;inputEncoding&#125;
+其中包含了很多特殊字段，其中{google:searchFieldtrialParameter}是google实验使用的参数，google会随机挑选部分用户进行新版本的实验。实验版本返回的DOM与常规版本的不一样，这导致ublacklist无法正常使用。
+怎么判断现在有没有参加实验呢？
+正常的google的搜索结果是：
+&lt;div class=&quot;g&quot;&gt;&lt;/div&gt;
+如果为下面两者之一就是新版的SERP DOM：
+&lt;div data-hveid=&quot;...&quot;&gt;  &lt;div class=&quot;MjjYud&quot;&gt;&lt;/div&gt;&lt;/div&gt;
+ublacklist无法识别新版的SERP DOM导致失效。只需要修改默认的网址，就可以避免参与新版的实验，就可以恢复正常的使用，
+下面这个也讨论了关于google新UI带来的问题：
+https://github.com/iorate/ublacklist/issues/542?utm_source=chatgpt.com
+]]></content>
+      <tags>
+        <tag>homework</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Freecontrol</title>
+    <url>/2026/02/15/freecontrol/</url>
+    <content><![CDATA[FreeControl
+Unet的最初输入：编码之后的文本，加完噪音且之后的图像，两者进行交叉注意力层之后送入unet中
+注：图像在加噪音之前还会经过一个VAE编码器
+结构信息发现
+论文中提到对图像的unet的中间状态进行PCA，其结果带有结构信息，所以提出了不需要为每个控制信息都额外的重新训练适配器，讲PCA得到的结构信息来控制生成图像的结构信息。
+
+[!NOTE]
+并不是将下面这些图像作为输入经过DDIM，得到中间层的unet然后做PCA，而是将这些当作结果图像，通过DDIM的可逆性，方向推得unet中间层然后做PCA得到的。
+
+
+Analysis Stage
+上面提到图像的结构可以使用PCA来得到，那么语义的结构应该怎么得到呢？
+Analysis Stage主要是为了计算BtB_tBt​的，BtB_tBt​ 是某个语义结构子空间（structure subspace）的基，它用来提取结构表示： St=BtTFtS_{t}=B_{t}^TF_{t}St​=BtT​Ft​ 其中Ft是unet的特征，St是结构图
+下图计算出来的相当于是以man这个词语为核心的语义结构字体空间的基
+
+具体流程为：
+1.根据输入的特定的文本信息，通过文生图模型生成一组seed image
+2.然后将生成这些图像的unet的中间状态进行PCA计算BtB_tBt​, 因为seed image 有一组图像，所以这一组图像在同一个unet层会生成一组特征向量，需要将这些特征向量拼接起来，然后再使用PCA计算BtB_tBt​
+3.然后根据PCA的结果选取部分特征向量作为结构指导。
+Synthesis Stage
+上面的内容简要介绍了怎么从文本和控制图像中提取控制结构，那么怎么将两者进行对齐呢，Synthesis Stage的核心是将原始生成的图像的结构和控制图像的结构图进行组合，使得前者的结构不断毕竟后者的结构以实现控制结构。
+
+Synthesis Stage又分为Guiding Branch和Generation Branch两部分
+Guiding Branch
+Guiding Branch对应上图的蓝色部分
+其中，Input Condition 是输入的控制图像，是预期结果生成图像的结构。
+现在想要获得这个图像在unet中某时间步和某层的结构图，可以将这个图像看作最终的输出，然后根据一个结果图像反向获得其在unet的结构图
+正常的正向扩散模型流程是：
+输入噪点图 -&gt; VAE encoder -&gt; 和文本结合送入unet -&gt; VAE decoder -&gt; result
+第一步是反向经过VAE decoder，这个的逆过程相当于经过VAE encoder，然后再是通过DDIM inversion得到在unet中具体层具体时间步的特征向量。
+DDIM inversion
+本博客中另一篇文章DDIM于DDPM中介绍了DDIM的正向流程，其中想要获得下一步的去噪效果需要先估算干净的图像，然后再加噪音回下一个时间步。此处的结果可以相当于干净的图像，可以通过固定的加噪音到指定的时间步,公式如下所示：
+xt=αˉt x0+1−αˉt ϵ,ϵ∼N(0,I)x_t
+=
+\sqrt{\bar{\alpha}_t}\, x_0
++
+\sqrt{1-\bar{\alpha}_t}\,\epsilon,
+\quad \epsilon \sim \mathcal N(0, I)
+xt​=αˉt​​x0​+1−αˉt​​ϵ,ϵ∼N(0,I)
+有了某一步的特征之后就能获得对应的结构指导图（Structure Guidance）
+Generation Branch
+再看上面的分支，通过输入噪音图像和文本信息，可以直接正向的结构指导图
+MASK
+初始输入的噪音图像和文本送入unet中会经过cross attention层，通过这一层可以得到一个注意力图，表示当前文本对图像中注意力主要关注的地方（经过归一化处理的），这个注意力图称为mask，其中约接近1，表示越重要，越需要结构控制，接近则表示不需要结构控制。
+注：可以将mask设置为全1，此时表示所有点都需要结构控制。
+结构融合
+有了指导的结构图和当前实际的结构图之后，就需要进行使用结构指导。
+
+
+如上图公式所示，分为两个部分，第一个部分是前景指导，第二个是背景指导。
+其中 mijm_{ij}mij​是Mask中的一个点的权重,
+sts_tst​ 表示t时间步Generation Branch生成的结构图
+stg{s_t}^gst​g表示Guiding Branch生成的结构图
+此处使用MSE来表示这两者的差距并且使用注意力来控制对结构的敏感度，
+后面的部分用来惩罚不要过多控制背景。
+所以上面这个公式主要是一个惩罚项，但结构与想要的不一致的时候会变大
+内容风格控制
+添加了结构控制之后可能会影响生成的风格，所以分别计算不用结构控制生成的图像和用结构控制生成的图像的外观向量：
+
+然后得到gag_aga​来控制风格和之前相似，其中带上划线的V是不带控制结构生成的图像
+
+最终的更新公式为：
+
+其中第二项是不添加文本信息的生成噪音
+在CFG中是如此定义的：
+ϵ^t=ϵθ(xt;t,∅)+s(ϵθ(xt;t,c)−ϵθ(xt;t,∅))\hat{\epsilon}_t
+=
+\epsilon_\theta(x_t; t, \varnothing)
++
+s\big(
+\epsilon_\theta(x_t; t, c)
+-
+\epsilon_\theta(x_t; t, \varnothing)
+\big)
+ϵ^t​=ϵθ​(xt​;t,∅)+s(ϵθ​(xt​;t,c)−ϵθ​(xt​;t,∅))
+其意义是加上只由语义产生的噪音部分，让文本的条件被放大，然后将这个式子化简之后就能得到（7）的前两项
+补充
+PCA详解
+VAE编码器
+VAE编码器是将一张真实图像压缩到一个连续、可加噪、可扩散的 latent 表示。
+一般来说图像直接经过duffion网络，会造成参数量极大，训练时间过大
+例子，输入图像是3 _ 512 _ 512的，经过VAE编码器之后变成4 _ 64 _ 64，空间维度降低了，但是物体结构和语义分布仍在，最终经过duffion之后，再通过VAE解码器恢复到原始图像的尺寸
+VAE生成的并不是一个固定的图像，而是为每一个通道生成一个标准差和方差，然后进行采样
+VAE的训练
+VAE是单独进行训练的，不会直接和扩散模型进行训练。和自编码器一样，VAE的输入和输出都是一幅同样的图像。
+loss函数
+LVAE=∥x−x^∥⏟重建损失+β⋅KL ⁣(q(z∣x) ∥ N(0,I))⏟正则项\mathcal{L}_{\text{VAE}}
+=
+\underbrace{\|x - \hat{x}\|}_{\text{重建损失}}
++
+\beta \cdot
+\underbrace{
+\mathrm{KL}\!\left(q(z \mid x)\,\|\,\mathcal{N}(0, I)\right)
+}_{\text{正则项}}
+LVAE​=重建损失∥x−x^∥​​+β⋅正则项KL(q(z∣x)∥N(0,I))​​
+其中xxx ：原始图像（像素空间）
+x^\hat{x}x^ ：重建后的输出
+∣x−x^∣|x - \hat{x}|∣x−x^∣ ：重建损失（Reconstruction Loss）
+zzz ：潜在变量（Latent Variable）
+q(z∣x)q(z \mid x)q(z∣x) ： 编码器给出的后验分布
+N(0,I)\mathcal{N}(0, I)N(0,I) ：潜在空间的先验分布
+KL(q(z∣x),∣,N(0,I))\mathrm{KL}\left(q(z \mid x),|,\mathcal{N}(0, I)\right)KL(q(z∣x),∣,N(0,I))：KL 散度正则项
+β\betaβ ：KL 权重系数（正则强度）
+正则项的加入是为了将潜在空间的分布拉向标准正态分布，这样解码器就能从一个近似标准正态分布分布的数据中恢复原始的图像。
+]]></content>
+      <tags>
+        <tag>扩散模型</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Hello world!</title>
     <url>/2025/04/30/hello-world/</url>
     <content><![CDATA[Welcome to Hexo! This is your very first post. Check documentation for more info. If you get any problems when using Hexo, you can find the answer in troubleshooting or you can ask me on GitHub.
@@ -1060,66 +1089,6 @@ negtative sample 模型是输出层没有 huffman 树，而是使用二分类器
       </tags>
   </entry>
   <entry>
-    <title>wsl2下使用不同版本的cuda</title>
-    <url>/2025/09/20/wsl2%E4%B8%8B%E4%BD%BF%E7%94%A8%E4%B8%8D%E5%90%8C%E7%89%88%E6%9C%AC%E7%9A%84cuda/</url>
-    <content><![CDATA[​	在wsl2中可以下载多个版本的cuda，并且可以在终端中指定具体使用哪一个版本
-​	首先先查看默认的cuda版本：
-nvcc --version
-​	会输出如下的信息，其中的cuda版本就是当前默认使用的cuda版本
-
-​	修改使用的cuda版本，在终端中输入：
-export PATH=/usr/local/cuda-12.1/bin:$PATHexport LD_LIBRARY_PATH=/usr/local/cuda-12.1/lib64:$LD_LIBRARY_PATH
-​	上面的例子是使用cuda12.1版本的。将指定版本的cuda的path放到环境path的开头，使得能够先访问到指定版本的cuda。
-​	添加完路径之后，打印环境变量：
-printenv
-​	打印出来的path变量中cuda12.1的路径是在cuda13.0前面的，这样就能优先使用cuda12.1
-
-​	要想将指定版本设置为默认的版本，需要修改bashrc中的内容，这个文件是bash的初始化文件，打开bash之前会先执行这个文件。；先打开这个文件：
-source ~/.bashrc
-然后仍然将这些内容复制到里面去，保存之后退出：
-
-export PATH=/usr/local/cuda-12.1/bin:$PATHexport LD_LIBRARY_PATH=/usr/local/cuda-12.1/lib64:$LD_LIBRARY_PATH
-]]></content>
-      <tags>
-        <tag>wsl</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>基于自编码器补全缺失特征值</title>
-    <url>/2025/10/27/%E8%87%AA%E7%BC%96%E7%A0%81%E5%99%A8%E8%A1%A5%E5%85%A8%E7%BC%BA%E5%A4%B1%E5%80%BC/</url>
-    <content><![CDATA[Using Autoencoders and Automatic Differentiation to Reconstruct Missing Variables in a Set of Time Series
-基于自编码器补全缺失特征值
-背景：不同的样本的特征值可能不完全一致，也有可能有部分样本的特征值会有所缺失，也有可能数据的来源不一致，比如对于同一个实验，不同的实验室得到的最终数据标注特征不一定一致，当想要混合使用这些数据的时候就必须天填充缺失值。
-为了使用特征值数量不同的样本，首先就必须统一特征值的数量。那么有两种策略可以选择，一个是使用共同都有的特征，直接丢弃掉不同的特征，这种策略会导致特征值数量降低，并且有可能样本的特征值并没有交集。第二种策略是使用某种技术来填充特征值，使特征值少的样本经过填充之后与其他样本具有同样的特征。第二个策略有一个前提要求：缺失的特征值必须与其他的特征值有一定的关系。如果没有关系的话，相当于这个特征是独立于其他的，这个时候如果还使用其他的特征预测这个特征的话，无异于“猜”。
-论文中模型实现的功能：
-能够对不同的特征子集进行补全，并且缺失的特征值可以是多个。
-模型原理：
-模型训练：
-
-模型的训练就是使用自编码器进行训练，输入和输出是一致的都是特征值最全的一组样本。注意此训练的参数是自编码器中的参数。
-一旦模型训练完成之后，固定自编码器中的参数。
-预测缺失值：
-这篇论文中预测缺失值的方式与其他的方式很不一样。其他很多时候，当一个模型训练好之后，将输入送入模型，模型得到的结果就是输出。但是此处则不一样。
-模型如下所示：
-
-首先XredX_{red}Xred​是没有已有的特征，XmissX_{miss}Xmiss​是缺失的特征.将XmissX_{miss}Xmiss​看作一个参数，一个可训练的参数，初始值为0。
-然后将X送入训练好的自编码器，能够得到输出Xˇ\check{X}Xˇ，然后就能得到一个损失函数，此时的损失函数只使用已知的特征进行计算：
-
-因为自编码器的参数已经固定，损失函数输出可以看作一个只与XmissX_{miss}Xmiss​有关的函数。
-此时有一个核心思想：最优的XmissX_{miss}Xmiss​一定会使LredL_{red}Lred​最低
-那么现在问题就变成了找到最优的XmissX_{miss}Xmiss​使LredL_{red}Lred​最低，
-
-可以使用梯度下降来求得最优的XmissX_{miss}Xmiss​
-具体算法：
-
-论文中使用的自编码器的具体模型：
-
-]]></content>
-      <tags>
-        <tag>mabe</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>动手强化学习笔记</title>
     <url>/2025/09/09/%E5%8A%A8%E6%89%8B%E5%BC%BA%E5%8C%96%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/</url>
     <content><![CDATA[这个笔记是用于记录学习动手强化学习这本书的时候的问题疑惑以及解答，有助于之后用时查阅。
@@ -1243,6 +1212,66 @@ loss=1/2[Qw​(s,a)−(r+γa′max​Qw′​(s′,a′))]
 ]]></content>
       <tags>
         <tag>强化学习</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>wsl2下使用不同版本的cuda</title>
+    <url>/2025/09/20/wsl2%E4%B8%8B%E4%BD%BF%E7%94%A8%E4%B8%8D%E5%90%8C%E7%89%88%E6%9C%AC%E7%9A%84cuda/</url>
+    <content><![CDATA[​	在wsl2中可以下载多个版本的cuda，并且可以在终端中指定具体使用哪一个版本
+​	首先先查看默认的cuda版本：
+nvcc --version
+​	会输出如下的信息，其中的cuda版本就是当前默认使用的cuda版本
+
+​	修改使用的cuda版本，在终端中输入：
+export PATH=/usr/local/cuda-12.1/bin:$PATHexport LD_LIBRARY_PATH=/usr/local/cuda-12.1/lib64:$LD_LIBRARY_PATH
+​	上面的例子是使用cuda12.1版本的。将指定版本的cuda的path放到环境path的开头，使得能够先访问到指定版本的cuda。
+​	添加完路径之后，打印环境变量：
+printenv
+​	打印出来的path变量中cuda12.1的路径是在cuda13.0前面的，这样就能优先使用cuda12.1
+
+​	要想将指定版本设置为默认的版本，需要修改bashrc中的内容，这个文件是bash的初始化文件，打开bash之前会先执行这个文件。；先打开这个文件：
+source ~/.bashrc
+然后仍然将这些内容复制到里面去，保存之后退出：
+
+export PATH=/usr/local/cuda-12.1/bin:$PATHexport LD_LIBRARY_PATH=/usr/local/cuda-12.1/lib64:$LD_LIBRARY_PATH
+]]></content>
+      <tags>
+        <tag>wsl</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>基于自编码器补全缺失特征值</title>
+    <url>/2025/10/27/%E8%87%AA%E7%BC%96%E7%A0%81%E5%99%A8%E8%A1%A5%E5%85%A8%E7%BC%BA%E5%A4%B1%E5%80%BC/</url>
+    <content><![CDATA[Using Autoencoders and Automatic Differentiation to Reconstruct Missing Variables in a Set of Time Series
+基于自编码器补全缺失特征值
+背景：不同的样本的特征值可能不完全一致，也有可能有部分样本的特征值会有所缺失，也有可能数据的来源不一致，比如对于同一个实验，不同的实验室得到的最终数据标注特征不一定一致，当想要混合使用这些数据的时候就必须天填充缺失值。
+为了使用特征值数量不同的样本，首先就必须统一特征值的数量。那么有两种策略可以选择，一个是使用共同都有的特征，直接丢弃掉不同的特征，这种策略会导致特征值数量降低，并且有可能样本的特征值并没有交集。第二种策略是使用某种技术来填充特征值，使特征值少的样本经过填充之后与其他样本具有同样的特征。第二个策略有一个前提要求：缺失的特征值必须与其他的特征值有一定的关系。如果没有关系的话，相当于这个特征是独立于其他的，这个时候如果还使用其他的特征预测这个特征的话，无异于“猜”。
+论文中模型实现的功能：
+能够对不同的特征子集进行补全，并且缺失的特征值可以是多个。
+模型原理：
+模型训练：
+
+模型的训练就是使用自编码器进行训练，输入和输出是一致的都是特征值最全的一组样本。注意此训练的参数是自编码器中的参数。
+一旦模型训练完成之后，固定自编码器中的参数。
+预测缺失值：
+这篇论文中预测缺失值的方式与其他的方式很不一样。其他很多时候，当一个模型训练好之后，将输入送入模型，模型得到的结果就是输出。但是此处则不一样。
+模型如下所示：
+
+首先XredX_{red}Xred​是没有已有的特征，XmissX_{miss}Xmiss​是缺失的特征.将XmissX_{miss}Xmiss​看作一个参数，一个可训练的参数，初始值为0。
+然后将X送入训练好的自编码器，能够得到输出Xˇ\check{X}Xˇ，然后就能得到一个损失函数，此时的损失函数只使用已知的特征进行计算：
+
+因为自编码器的参数已经固定，损失函数输出可以看作一个只与XmissX_{miss}Xmiss​有关的函数。
+此时有一个核心思想：最优的XmissX_{miss}Xmiss​一定会使LredL_{red}Lred​最低
+那么现在问题就变成了找到最优的XmissX_{miss}Xmiss​使LredL_{red}Lred​最低，
+
+可以使用梯度下降来求得最优的XmissX_{miss}Xmiss​
+具体算法：
+
+论文中使用的自编码器的具体模型：
+
+]]></content>
+      <tags>
+        <tag>mabe</tag>
       </tags>
   </entry>
 </search>
