@@ -164,14 +164,7 @@
 
   
   <url>
-    <loc>https://kapicoder.github.io/tags/GAN/</loc>
-    <lastmod>2026-03-14</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>https://kapicoder.github.io/tags/homework/</loc>
+    <loc>https://kapicoder.github.io/tags/SAR%E5%9B%BE%E5%83%8F/</loc>
     <lastmod>2026-03-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
@@ -179,6 +172,13 @@
   
   <url>
     <loc>https://kapicoder.github.io/tags/Nao%E6%9C%BA%E5%99%A8%E4%BA%BA/</loc>
+    <lastmod>2026-03-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>https://kapicoder.github.io/tags/homework/</loc>
     <lastmod>2026-03-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
@@ -199,7 +199,7 @@
   </url>
   
   <url>
-    <loc>https://kapicoder.github.io/tags/SAR%E5%9B%BE%E5%83%8F/</loc>
+    <loc>https://kapicoder.github.io/tags/bugs/</loc>
     <lastmod>2026-03-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
@@ -220,7 +220,7 @@
   </url>
   
   <url>
-    <loc>https://kapicoder.github.io/tags/%E5%BC%BA%E5%8C%96%E5%AD%A6%E4%B9%A0/</loc>
+    <loc>https://kapicoder.github.io/tags/GAN/</loc>
     <lastmod>2026-03-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
@@ -235,6 +235,13 @@
   
   <url>
     <loc>https://kapicoder.github.io/tags/mabe/</loc>
+    <lastmod>2026-03-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>https://kapicoder.github.io/tags/%E5%BC%BA%E5%8C%96%E5%AD%A6%E4%B9%A0/</loc>
     <lastmod>2026-03-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
